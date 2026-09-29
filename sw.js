@@ -1,5 +1,5 @@
 // 아이카츠 앙코르: 오프라인에서도 열리도록 앱 파일을 저장해 둡니다.
-const CACHE = "encore-binder-v4";
+const CACHE = "encore-binder-v5";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
