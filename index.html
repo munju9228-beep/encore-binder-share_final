@@ -169,6 +169,20 @@ button{cursor:pointer}
 .pk-cap b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk-other{font-size:10px;color:var(--ink-soft);background:var(--chip);border-radius:5px;padding:1px 4px;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pk-foot{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));margin:0 -18px calc(-20px - env(safe-area-inset-bottom,0px));padding:10px 18px calc(12px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line)}
+.sign{position:absolute;left:6px;bottom:28px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:14px;line-height:1;color:#fff;background:linear-gradient(135deg,#FFD66B,#F5A623);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.25)}
+.n3 .sign{width:18px;height:18px;font-size:11px;left:4px;bottom:22px}
+.n4 .sign{width:14px;height:14px;font-size:9px;left:3px;bottom:3px;box-shadow:0 0 0 1px #fff}
+.detail-top .sign,.side .sign{width:26px;height:26px;font-size:15px;bottom:8px;left:8px}
+.pk-card .sign{bottom:6px;left:6px;width:18px;height:18px;font-size:11px}
+.tag.signtag{background:linear-gradient(135deg,#FFE9A8,#FFD27A);color:#8A5A00;font-weight:700}
+.chip.starchip[aria-pressed="true"]{background:linear-gradient(135deg,#FFD66B,#F5A623);border-color:#F5A623;color:#5A3A00;font-weight:700}
+.bk-switch{display:flex;align-items:center;gap:10px;padding:8px 4px;font-size:14px;cursor:pointer}
+.bk-switch input{position:absolute;opacity:0;width:1px;height:1px}
+.sw-track{flex:0 0 42px;height:24px;border-radius:12px;background:var(--line);position:relative;transition:background .2s}
+.sw-track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .2s}
+.bk-switch input:checked + .sw-track{background:var(--accent)}
+.bk-switch input:checked + .sw-track::after{left:21px}
+.bk-switch input:focus-visible + .sw-track{outline:3px solid var(--accent);outline-offset:2px}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
 .pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
@@ -367,7 +381,7 @@ const SRC = {arcade:"게임기체",promo:"프로모션"};
 const SRC_ORDER = ["arcade","promo"];
 const PART = {top:"상의",bottom:"하의",dress:"원피스",full:"풀코디",shoes:"슈즈",acc:"헤어 악세사리"};
 const PART_ORDER = ["top","bottom","dress","full","shoes","acc"];
-const TYPE = {lovely:"러블리",cool:"쿨",sexy:"섹시",pop:"팝"};
+const TYPE = {lovely:"큐트",cool:"쿨",sexy:"섹시",pop:"팝"};
 const TYPE_ORDER = ["lovely","cool","sexy","pop"];
 const DIMS = ["dan","rarity","type","brand","source","part"];
 let TAB_COLORS = ["#F5A7C0","#E06A94","#FFC4D4","#EE89AB","#F9B8CB","#D65E8A"];
@@ -418,15 +432,15 @@ let backend = {kind:"none"}, assets = null;
 
 /* ---------- prefs (per-viewer convenience) ---------- */
 function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(p){
-  if(p.theme)S.theme=p.theme;
+  if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
   if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
   if(p.f)DIMS.forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
-function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.qty=d.qty||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.qty=d.qty||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,brands:S.brands,seedVer:S.seedVer||0}))}catch(e){toast("이 기기에 저장하지 못했어요")}}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -469,24 +483,73 @@ function saveLocalPhotos(){
     .catch(()=>toast("휴대폰 저장 공간이 부족해서 사진을 저장하지 못했어요"));
 }
 
-const DEFAULT_DATA={"ver": 2, "cards": [{"id": "s101", "no": "E1-01", "name": "오로라 키스 캐미솔", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "top", "coord": "오로라 키스 코디"}, {"id": "s102", "no": "E1-02", "name": "오로라 키스 드레이프 스커트", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "bottom", "coord": "오로라 키스 코디"}, {"id": "s103", "no": "E1-03", "name": "오로라 키스 발레 슈즈", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "shoes", "coord": "오로라 키스 코디"}, {"id": "s104", "no": "E1-04", "name": "오로라 키스 리본", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "acc", "coord": "오로라 키스 코디"}, {"id": "s105", "no": "E1-05", "name": "아이스 블루 프릴 캐미솔", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "top", "coord": "아이스 블루 프릴 코디"}, {"id": "s106", "no": "E1-06", "name": "아이스 블루 프릴 파니에", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "아이스 블루 프릴 코디"}, {"id": "s107", "no": "E1-07", "name": "아이스 블루 슈즈", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "아이스 블루 프릴 코디"}, {"id": "s108", "no": "E1-08", "name": "주얼 달린 퍼플 리본", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "acc", "coord": "아이스 블루 프릴 코디"}, {"id": "s109", "no": "E1-09", "name": "작은 꽃 무늬 옐로 원피스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "dress", "coord": "작은 꽃 무늬 옐로 코디"}, {"id": "s110", "no": "E1-10", "name": "드리미 스타 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "top", "coord": "드리미 스타 코디"}, {"id": "s111", "no": "E1-11", "name": "드리미 스타 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "드리미 스타 코디"}, {"id": "s112", "no": "E1-12", "name": "드리미 스타 펌프스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "드리미 스타 코디"}, {"id": "s113", "no": "E1-13", "name": "차미 리본 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "top", "coord": "차미 리본 코디"}, {"id": "s114", "no": "E1-14", "name": "차미 리본 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "차미 리본 코디"}, {"id": "s115", "no": "E1-15", "name": "차미 리본 샌들", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "차미 리본 코디"}, {"id": "sp01", "no": "EP-001", "name": "핑크 스테이지 베스트&스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "brand": "bmumgwpz8mnp5c", "source": "promo", "part": "dress", "coord": "핑크 스테이지 코디", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "sp02", "no": "EP-002", "name": "레전더리 루주 티아라", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "promo", "part": "acc", "coord": "레전더리 루주 코디", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "sp03", "no": "EP-029", "name": "스타라이트 학원 교복", "dan": "2탄", "rarity": "R", "type": "lovely", "source": "promo", "part": "dress", "coord": "스타라이트 교복", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "cmumej325ho3ll", "no": "E1-16", "name": "차미 리본 액세사리", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "acc"}, {"id": "cmumejthm6yzha", "no": "E1-17", "name": "클리어니스 옐로 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "top", "coord": "클리어니스 옐로 코디"}, {"id": "cmumek5gyp1y7l", "no": "E1-18", "name": "클리어니스 옐로 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "클리어니스 옐로 코디"}, {"id": "cmumekh6tqhtfw", "no": "E1-19", "name": "클리어니스 옐로 펌프스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "클리어니스 옐로 코디"}, {"id": "cmumel9okfsl0b", "no": "E1-20", "name": "클리어니스 옐로 악세사리", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "acc", "coord": "클리어니스 옐로 코디"}, {"id": "cmumelray64w2q", "no": "E1-21", "name": "핑크 스테이지 베스트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "top", "coord": "핑크 스테이지 코디"}, {"id": "cmumemfq6qosoa", "no": "E1-22", "name": "핑크 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "핑크 스테이지 코디"}, {"id": "cmumemqqqu1zqg", "no": "E1-23", "name": "핑크 스테이지 슈즈", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "핑크 스테이지 코디"}, {"id": "cmumep6tdy0iwz", "no": "E1-24", "name": "퍼플 슬리브 레몬 컬러 볼레로", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "top", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumepjyuqw7d9", "no": "E1-25", "name": "라벤더 프릴 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumerv551qea4", "no": "E1-26", "name": "옐로 레이스업 부츠", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumesacua3qlu", "no": "E1-27", "name": "핑크 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "top", "coord": "핑크 블로섬 코디"}, {"id": "cmumet8lboxf5p", "no": "E1-28", "name": "핑크 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "핑크 블로섬 코디"}, {"id": "cmumetinxbh0hx", "no": "E1-29", "name": "핑크 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "핑크 블로섬 코디"}, {"id": "cmumeu5gy1ah22", "no": "E1-30", "name": "오데트 스완 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "source": "arcade", "part": "full", "coord": "오데트 스완 코디"}, {"id": "cmumev1hbn8byj", "no": "E1-31", "name": "리를 리본 스토리 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "source": "arcade", "part": "full", "coord": "리를 리본 스토리 코디"}, {"id": "cmumevm02dkcts", "no": "E1-32", "name": "오로라 페가수스 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "source": "arcade", "part": "full", "coord": "오로라 페가수스 코디"}, {"id": "cmumf2c0oia04m", "no": "E1-33", "name": "갤럭시 코즈믹 원 숄더", "dan": "1탄", "rarity": "PR", "type": "cool", "source": "arcade", "part": "top", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf3pb5dwmrq", "no": "E1-34", "name": "갤럭시 코즈믹 스커트", "dan": "1탄", "rarity": "PR", "type": "cool", "source": "arcade", "part": "bottom", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf41grtljb0", "no": "E1-35", "name": "갤럭시 코즈믹 부츠", "dan": "1탄", "rarity": "PR", "type": "cool", "source": "arcade", "part": "shoes", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf4fi35qwuf", "no": "E1-36", "name": "갤럭시 코즈믹 카츄샤", "dan": "1탄", "rarity": "PR", "type": "cool", "source": "arcade", "part": "acc", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf71qnz3fsk", "no": "E1-37", "name": "프리즘 사이버 그래픽 원피스", "dan": "1탄", "rarity": "R", "type": "cool", "source": "arcade", "part": "dress", "coord": "프리즘 사이버 그래픽 코디"}, {"id": "cmumfb7nwwqk59", "no": "E1-38", "name": "블랙 모던 볼레로", "dan": "1탄", "rarity": "R", "type": "cool", "source": "arcade", "part": "top", "coord": "블랙 모던 코디"}, {"id": "cmumfbnu5obrrv", "no": "E1-39", "name": "블랙 퓨처 에나멜 쇼트 팬츠", "dan": "1탄", "rarity": "R", "type": "cool", "source": "arcade", "part": "bottom", "coord": "블랙 모던 코디"}, {"id": "cmumfbz6lh6ufl", "no": "E1-40", "name": "블랙 퓨처 부츠", "dan": "1탄", "rarity": "R", "type": "cool", "source": "arcade", "part": "shoes", "coord": "블랙 모던 코디"}, {"id": "cmumfd2ebfhv4v", "no": "E1-41", "name": "블루 스테이지 블라우스", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "top", "coord": "블루 스테이지 코디"}, {"id": "cmumfe7mp0gi8s", "no": "E1-42", "name": "블루 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "bottom", "coord": "블루 스테이지 코디"}, {"id": "cmumferq7gr7g5", "no": "E1-43", "name": "블루 스테이지 부츠", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "shoes", "coord": "블루 스테이지 코디"}, {"id": "cmumffzis6wjjh", "no": "E1-44", "name": "블랙 스트라이프 재킷", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "top", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfh3t4nt8mg", "no": "E1-45", "name": "다이아몬드 체크 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "bottom", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfht64gdrni", "no": "E1-46", "name": "블루 스트랩 슈즈", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "shoes", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfi5vvsizmw", "no": "E1-47", "name": "네이비 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "top", "coord": "네이비 블로섬 코디"}, {"id": "cmumfihgq7w1k5", "no": "E1-48", "name": "네이비 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "bottom", "coord": "네이비 블로섬 코디"}, {"id": "cmumfisbmt5lrb", "no": "E1-49", "name": "네이비 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "shoes", "coord": "네이비 블로섬 코디"}, {"id": "cmumfjaow89638", "no": "E1-50", "name": "드림 에미넌스 풀코디", "dan": "1탄", "rarity": "ER", "type": "cool", "source": "arcade", "part": "full", "coord": "드림 에미넌스 코디"}, {"id": "cmumfjuxkioal5", "no": "E1-51", "name": "레전더리 루주 드레스", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "arcade", "part": "dress", "coord": "레전더리 루주 코디"}, {"id": "cmumfk94s2rdsh", "no": "E1-52", "name": "레전더리 루주 펌프스", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "레전더리 루주 코디"}, {"id": "cmumfkrdth2sfh", "no": "E1-53", "name": "호랑나비 레드 커쿤 원피스", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "dress", "coord": "호랑나비 레드 코디"}, {"id": "cmumfl2ukhpavo", "no": "E1-54", "name": "호랑나비 레드 뮬", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "호랑나비 레드 코디"}, {"id": "cmumflk2vxqior", "no": "E1-55", "name": "퍼플 주얼리 원피스", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "dress", "coord": "퍼플 주얼리 코디"}, {"id": "cmumfm7bvxidip", "no": "E1-56", "name": "골드 체인 글래디에이터", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "퍼플 주얼리 코디"}, {"id": "cmumfn0qcjemqe", "no": "E1-57", "name": "아게하 로고 프릴 톱스", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "top", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfnikd6slsy", "no": "E1-58", "name": "아게하 퍼 달린 스커트", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfnvn5kw332", "no": "E1-59", "name": "블랙 시폰 머리띠", "dan": "1탄", "rarity": "R", "type": "sexy", "source": "arcade", "part": "acc", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfo97m1jl6j", "no": "E1-60", "name": "퍼플 스테이지 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfojenwd63r", "no": "E1-61", "name": "퍼플 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfowvbdtwc6", "no": "E1-62", "name": "퍼플 스테이지 하이 펌프스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfpffehupfm", "no": "E1-63", "name": "푸치 무늬 샤이닝 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top", "coord": "푸치 무늬 코디"}, {"id": "cmumfpq5s8o61b", "no": "E1-64", "name": "블랙 워시 데님 미니", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "푸치 무늬 코디"}, {"id": "cmumfqlc9ehidn", "no": "E1-65", "name": "섹시 로고 튜브톱", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top"}, {"id": "cmumfqvr02o7ar", "no": "E1-66", "name": "벨트 달린 레더 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom"}, {"id": "cmumfr7n0eqfy9", "no": "E1-67", "name": "사이 하이 레더 부츠", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "shoes"}, {"id": "cmumfro5vmlz62", "no": "E1-68", "name": "퍼플 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfrz5zi209k", "no": "E1-69", "name": "퍼플 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfs9lkl2ly5", "no": "E1-70", "name": "퍼플 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfsvwhead1c", "no": "E1-71", "name": "선샤인 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "top", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumft7hn55218", "no": "E1-72", "name": "선샤인 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "bottom", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfthoj53uvo", "no": "E1-73", "name": "선샤인 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "shoes", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfttwalwtaz", "no": "E1-74", "name": "선샤인 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "acc", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfu7wg46rgc", "no": "E1-75", "name": "선라이즈 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "top", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfulh786v8s", "no": "E1-76", "name": "선라이즈 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "bottom", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfv0h2pv7kf", "no": "E1-77", "name": "선라이즈 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "shoes", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfvc5u3a4da", "no": "E1-78", "name": "선라이즈 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "acc", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfvnu4lcw5q", "no": "E1-79", "name": "선셋 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "top", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfvyj7lanmr", "no": "E1-80", "name": "선셋 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "bottom", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfw8901ev1r", "no": "E1-81", "name": "선셋 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "shoes", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfwjn20zp9j", "no": "E1-82", "name": "선셋 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "source": "arcade", "part": "acc", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfwzyj1v4tt", "no": "E1-83", "name": "옐로 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "top", "coord": "옐로 블로섬 코디"}, {"id": "cmumfxboqqs4db", "no": "E1-84", "name": "옐로 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "bottom", "coord": "옐로 블로섬 코디"}, {"id": "cmumfy424734m9", "no": "E1-85", "name": "옐로 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "shoes", "coord": "옐로 블로섬 코디"}, {"id": "cmumkztrh8fi14", "no": "EP-030", "name": "스타라이트 학원 부츠", "dan": "프로모션", "rarity": "R", "type": "lovely", "source": "promo", "part": "shoes", "coord": "스타라이트 교복", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "cmuml11b364pqi", "no": "EP-037", "name": "엠블럼이 달린 세일러 마린 탑스&스커트", "dan": "2탄", "rarity": "N", "type": "lovely", "source": "promo", "part": "dress", "memo": "챠오 2026년 11월호 부록"}, {"id": "cmuml1nwm7hnuv", "no": "EP-038", "name": "블루 워크 부츠", "dan": "2탄", "rarity": "N", "type": "lovely", "source": "promo", "part": "shoes", "memo": "챠오 2026년 11월호 부록"}], "brands": [{"id": "bmumgvnekdzkwf", "name": "엔젤리 슈가"}, {"id": "bmumgw6c98qqn0", "name": "퓨처링 걸"}, {"id": "bmumgwe0kok3ob", "name": "스파이시 아게하"}, {"id": "bmumgwir84mmex", "name": "솔레이유"}, {"id": "bmumgwpz8mnp5c", "name": "스쿨룩"}], "qty": {}};
+const DEFAULT_DATA={"ver": 3, "cards": [{"id": "s101", "no": "E1-01", "name": "오로라 키스 캐미솔", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "top", "coord": "오로라 키스 코디"}, {"id": "s102", "no": "E1-02", "name": "오로라 키스 드레이프 스커트", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "bottom", "coord": "오로라 키스 코디"}, {"id": "s103", "no": "E1-03", "name": "오로라 키스 발레 슈즈", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "shoes", "coord": "오로라 키스 코디"}, {"id": "s104", "no": "E1-04", "name": "오로라 키스 리본", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "acc", "coord": "오로라 키스 코디"}, {"id": "s105", "no": "E1-05", "name": "아이스 블루 프릴 캐미솔", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "top", "coord": "아이스 블루 프릴 코디"}, {"id": "s106", "no": "E1-06", "name": "아이스 블루 프릴 파니에", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "bottom", "coord": "아이스 블루 프릴 코디"}, {"id": "s107", "no": "E1-07", "name": "아이스 블루 슈즈", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "shoes", "coord": "아이스 블루 프릴 코디"}, {"id": "s108", "no": "E1-08", "name": "주얼 달린 퍼플 리본", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "acc", "coord": "아이스 블루 프릴 코디"}, {"id": "s109", "no": "E1-09", "name": "작은 꽃 무늬 옐로 원피스", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "dress", "coord": "작은 꽃 무늬 옐로 코디"}, {"id": "s110", "no": "E1-10", "name": "드리미 스타 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumqgyd5rudbp", "source": "arcade", "part": "top", "coord": "드리미 스타 코디"}, {"id": "s111", "no": "E1-11", "name": "드리미 스타 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumqgyd5rudbp", "source": "arcade", "part": "bottom", "coord": "드리미 스타 코디"}, {"id": "s112", "no": "E1-12", "name": "드리미 스타 펌프스", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumqgyd5rudbp", "source": "arcade", "part": "shoes", "coord": "드리미 스타 코디"}, {"id": "s113", "no": "E1-13", "name": "차미 리본 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "top", "coord": "차미 리본 코디"}, {"id": "s114", "no": "E1-14", "name": "차미 리본 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "차미 리본 코디"}, {"id": "s115", "no": "E1-15", "name": "차미 리본 샌들", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "차미 리본 코디"}, {"id": "sp01", "no": "EP-001", "name": "핑크 스테이지 베스트&스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "brand": "bmumgwpz8mnp5c", "source": "promo", "part": "dress", "coord": "핑크 스테이지 코디", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "sp02", "no": "EP-002", "name": "레전더리 루주 티아라", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "promo", "part": "acc", "coord": "레전더리 루주 코디", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "sp03", "no": "EP-029", "name": "스타라이트 학원 교복", "dan": "2탄", "rarity": "R", "type": "lovely", "source": "promo", "part": "dress", "coord": "스타라이트 교복", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "cmumej325ho3ll", "no": "E1-16", "name": "차미 리본 액세사리", "dan": "1탄", "rarity": "R", "type": "lovely", "source": "arcade", "part": "acc"}, {"id": "cmumejthm6yzha", "no": "E1-17", "name": "클리어니스 옐로 톱스", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "top", "coord": "클리어니스 옐로 코디"}, {"id": "cmumek5gyp1y7l", "no": "E1-18", "name": "클리어니스 옐로 스커트", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "bottom", "coord": "클리어니스 옐로 코디"}, {"id": "cmumekh6tqhtfw", "no": "E1-19", "name": "클리어니스 옐로 펌프스", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "shoes", "coord": "클리어니스 옐로 코디"}, {"id": "cmumel9okfsl0b", "no": "E1-20", "name": "클리어니스 옐로 악세사리", "dan": "1탄", "rarity": "R", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "acc", "coord": "클리어니스 옐로 코디"}, {"id": "cmumelray64w2q", "no": "E1-21", "name": "핑크 스테이지 베스트", "dan": "1탄", "rarity": "N", "type": "lovely", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "top", "coord": "핑크 스테이지 코디"}, {"id": "cmumemfq6qosoa", "no": "E1-22", "name": "핑크 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "bottom", "coord": "핑크 스테이지 코디"}, {"id": "cmumemqqqu1zqg", "no": "E1-23", "name": "핑크 스테이지 슈즈", "dan": "1탄", "rarity": "N", "type": "lovely", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "shoes", "coord": "핑크 스테이지 코디"}, {"id": "cmumep6tdy0iwz", "no": "E1-24", "name": "퍼플 슬리브 레몬 컬러 볼레로", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "top", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumepjyuqw7d9", "no": "E1-25", "name": "라벤더 프릴 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumerv551qea4", "no": "E1-26", "name": "옐로 레이스업 부츠", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "퍼플 슬리브 레몬 코디"}, {"id": "cmumesacua3qlu", "no": "E1-27", "name": "핑크 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "top", "coord": "핑크 블로섬 코디"}, {"id": "cmumet8lboxf5p", "no": "E1-28", "name": "핑크 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "bottom", "coord": "핑크 블로섬 코디"}, {"id": "cmumetinxbh0hx", "no": "E1-29", "name": "핑크 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "lovely", "source": "arcade", "part": "shoes", "coord": "핑크 블로섬 코디"}, {"id": "cmumeu5gy1ah22", "no": "E1-30", "name": "오데트 스완 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "brand": "bmumqgyd5rudbp", "source": "arcade", "part": "full", "coord": "오데트 스완 코디"}, {"id": "cmumev1hbn8byj", "no": "E1-31", "name": "리를 리본 스토리 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "source": "arcade", "part": "full", "coord": "리를 리본 스토리 코디"}, {"id": "cmumevm02dkcts", "no": "E1-32", "name": "오로라 페가수스 풀코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "source": "arcade", "part": "full", "coord": "오로라 페가수스 코디"}, {"id": "cmumf2c0oia04m", "no": "E1-33", "name": "갤럭시 코즈믹 원 숄더", "dan": "1탄", "rarity": "PR", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "top", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf3pb5dwmrq", "no": "E1-34", "name": "갤럭시 코즈믹 스커트", "dan": "1탄", "rarity": "PR", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "bottom", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf41grtljb0", "no": "E1-35", "name": "갤럭시 코즈믹 부츠", "dan": "1탄", "rarity": "PR", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "shoes", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf4fi35qwuf", "no": "E1-36", "name": "갤럭시 코즈믹 카츄샤", "dan": "1탄", "rarity": "PR", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "acc", "coord": "갤럭시 코즈믹 코디"}, {"id": "cmumf71qnz3fsk", "no": "E1-37", "name": "프리즘 사이버 그래픽 원피스", "dan": "1탄", "rarity": "R", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "dress", "coord": "프리즘 사이버 그래픽 코디"}, {"id": "cmumfb7nwwqk59", "no": "E1-38", "name": "블랙 모던 볼레로", "dan": "1탄", "rarity": "R", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "top", "coord": "블랙 모던 코디"}, {"id": "cmumfbnu5obrrv", "no": "E1-39", "name": "블랙 퓨처 에나멜 쇼트 팬츠", "dan": "1탄", "rarity": "R", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "bottom", "coord": "블랙 모던 코디"}, {"id": "cmumfbz6lh6ufl", "no": "E1-40", "name": "블랙 퓨처 부츠", "dan": "1탄", "rarity": "R", "type": "cool", "brand": "bmumgw6c98qqn0", "source": "arcade", "part": "shoes", "coord": "블랙 모던 코디"}, {"id": "cmumfd2ebfhv4v", "no": "E1-41", "name": "블루 스테이지 블라우스", "dan": "1탄", "rarity": "N", "type": "cool", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "top", "coord": "블루 스테이지 코디"}, {"id": "cmumfe7mp0gi8s", "no": "E1-42", "name": "블루 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "bottom", "coord": "블루 스테이지 코디"}, {"id": "cmumferq7gr7g5", "no": "E1-43", "name": "블루 스테이지 부츠", "dan": "1탄", "rarity": "N", "type": "cool", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "shoes", "coord": "블루 스테이지 코디"}, {"id": "cmumffzis6wjjh", "no": "E1-44", "name": "블랙 스트라이프 재킷", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "top", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfh3t4nt8mg", "no": "E1-45", "name": "다이아몬드 체크 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "bottom", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfht64gdrni", "no": "E1-46", "name": "블루 스트랩 슈즈", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "shoes", "coord": "블랙 스트라이프 코디"}, {"id": "cmumfi5vvsizmw", "no": "E1-47", "name": "네이비 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "top", "coord": "네이비 블로섬 코디"}, {"id": "cmumfihgq7w1k5", "no": "E1-48", "name": "네이비 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "bottom", "coord": "네이비 블로섬 코디"}, {"id": "cmumfisbmt5lrb", "no": "E1-49", "name": "네이비 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "cool", "source": "arcade", "part": "shoes", "coord": "네이비 블로섬 코디"}, {"id": "cmumfjaow89638", "no": "E1-50", "name": "드림 에미넌스 풀코디", "dan": "1탄", "rarity": "ER", "type": "cool", "source": "arcade", "part": "full", "coord": "드림 에미넌스 코디"}, {"id": "cmumfjuxkioal5", "no": "E1-51", "name": "레전더리 루주 드레스", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "arcade", "part": "dress", "coord": "레전더리 루주 코디"}, {"id": "cmumfk94s2rdsh", "no": "E1-52", "name": "레전더리 루주 펌프스", "dan": "1탄", "rarity": "PR", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "레전더리 루주 코디"}, {"id": "cmumfkrdth2sfh", "no": "E1-53", "name": "호랑나비 레드 커쿤 원피스", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "dress", "coord": "호랑나비 레드 코디"}, {"id": "cmumfl2ukhpavo", "no": "E1-54", "name": "호랑나비 레드 뮬", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "shoes", "coord": "호랑나비 레드 코디"}, {"id": "cmumflk2vxqior", "no": "E1-55", "name": "퍼플 주얼리 원피스", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "dress", "coord": "퍼플 주얼리 코디"}, {"id": "cmumfm7bvxidip", "no": "E1-56", "name": "골드 체인 글래디에이터", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "shoes", "coord": "퍼플 주얼리 코디"}, {"id": "cmumfn0qcjemqe", "no": "E1-57", "name": "아게하 로고 프릴 톱스", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "top", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfnikd6slsy", "no": "E1-58", "name": "아게하 퍼 달린 스커트", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "bottom", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfnvn5kw332", "no": "E1-59", "name": "블랙 시폰 머리띠", "dan": "1탄", "rarity": "R", "type": "sexy", "brand": "bmumgwe0kok3ob", "source": "arcade", "part": "acc", "coord": "아게하 로고 프릴 코디"}, {"id": "cmumfo97m1jl6j", "no": "E1-60", "name": "퍼플 스테이지 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "top", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfojenwd63r", "no": "E1-61", "name": "퍼플 스테이지 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "bottom", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfowvbdtwc6", "no": "E1-62", "name": "퍼플 스테이지 하이 펌프스", "dan": "1탄", "rarity": "N", "type": "sexy", "brand": "bmumgwpz8mnp5c", "source": "arcade", "part": "shoes", "coord": "퍼플 스테이지 코디"}, {"id": "cmumfpffehupfm", "no": "E1-63", "name": "푸치 무늬 샤이닝 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top", "coord": "푸치 무늬 코디"}, {"id": "cmumfpq5s8o61b", "no": "E1-64", "name": "블랙 워시 데님 미니", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "푸치 무늬 코디"}, {"id": "cmumfqlc9ehidn", "no": "E1-65", "name": "섹시 로고 튜브톱", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top"}, {"id": "cmumfqvr02o7ar", "no": "E1-66", "name": "벨트 달린 레더 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom"}, {"id": "cmumfr7n0eqfy9", "no": "E1-67", "name": "사이 하이 레더 부츠", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "shoes"}, {"id": "cmumfro5vmlz62", "no": "E1-68", "name": "퍼플 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "top", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfrz5zi209k", "no": "E1-69", "name": "퍼플 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "bottom", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfs9lkl2ly5", "no": "E1-70", "name": "퍼플 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "sexy", "source": "arcade", "part": "shoes", "coord": "퍼플 블로섬 코디"}, {"id": "cmumfsvwhead1c", "no": "E1-71", "name": "선샤인 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "top", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumft7hn55218", "no": "E1-72", "name": "선샤인 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "bottom", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfthoj53uvo", "no": "E1-73", "name": "선샤인 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "shoes", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfttwalwtaz", "no": "E1-74", "name": "선샤인 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "acc", "coord": "선샤인 스타웨이 코디"}, {"id": "cmumfu7wg46rgc", "no": "E1-75", "name": "선라이즈 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "top", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfulh786v8s", "no": "E1-76", "name": "선라이즈 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "bottom", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfv0h2pv7kf", "no": "E1-77", "name": "선라이즈 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "shoes", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfvc5u3a4da", "no": "E1-78", "name": "선라이즈 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "acc", "coord": "선라이즈 스타웨이 코디"}, {"id": "cmumfvnu4lcw5q", "no": "E1-79", "name": "선셋 스타웨이 톱스", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "top", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfvyj7lanmr", "no": "E1-80", "name": "선셋 스타웨이 스커트", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "bottom", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfw8901ev1r", "no": "E1-81", "name": "선셋 스타웨이 슈즈", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "shoes", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfwjn20zp9j", "no": "E1-82", "name": "선셋 스타웨이 머리띠", "dan": "1탄", "rarity": "PR", "type": "pop", "brand": "bmumgwir84mmex", "source": "arcade", "part": "acc", "coord": "선셋 스타웨이 코디"}, {"id": "cmumfwzyj1v4tt", "no": "E1-83", "name": "옐로 블로섬 톱스", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "top", "coord": "옐로 블로섬 코디"}, {"id": "cmumfxboqqs4db", "no": "E1-84", "name": "옐로 블로섬 스커트", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "bottom", "coord": "옐로 블로섬 코디"}, {"id": "cmumfy424734m9", "no": "E1-85", "name": "옐로 블로섬 부츠", "dan": "1탄", "rarity": "N", "type": "pop", "source": "arcade", "part": "shoes", "coord": "옐로 블로섬 코디"}, {"id": "cmumkztrh8fi14", "no": "EP-030", "name": "스타라이트 학원 부츠", "dan": "프로모션", "rarity": "R", "type": "lovely", "source": "promo", "part": "shoes", "coord": "스타라이트 교복", "memo": "아이카츠! 시작 선물 캠페인"}, {"id": "cmuml11b364pqi", "no": "EP-037", "name": "엠블럼이 달린 세일러 마린 탑스&스커트", "dan": "2탄", "rarity": "N", "type": "lovely", "source": "promo", "part": "dress", "memo": "챠오 2026년 11월호 부록"}, {"id": "cmuml1nwm7hnuv", "no": "EP-038", "name": "블루 워크 부츠", "dan": "2탄", "rarity": "N", "type": "lovely", "source": "promo", "part": "shoes", "memo": "챠오 2026년 11월호 부록"}, {"id": "cmunf7olhu740b", "no": "E1-01", "name": "오로라 키스 캐미솔", "dan": "1탄", "rarity": "PR", "type": "lovely", "brand": "bmumgvnekdzkwf", "source": "arcade", "part": "top", "coord": "오로라 키스 코디", "star": true, "memo": "싸인 카드"}, {"id": "cmunf8kqlp8zg3", "no": "E1-30", "name": "오데트 스완 코디", "dan": "1탄", "rarity": "ER", "type": "lovely", "brand": "bmumqgyd5rudbp", "source": "arcade", "part": "full", "coord": "오데트 스완 코디", "star": true, "memo": "싸인 카드"}], "brands": [{"id": "bmumgvnekdzkwf", "name": "엔젤리 슈가"}, {"id": "bmumgw6c98qqn0", "name": "퓨처링 걸"}, {"id": "bmumgwe0kok3ob", "name": "스파이시 아게하"}, {"id": "bmumgwir84mmex", "name": "솔레이유"}, {"id": "bmumgwpz8mnp5c", "name": "스쿨룩"}, {"id": "bmumqgyd5rudbp", "name": "드리미 크라운"}], "qty": {}};
 function seedDefaults(){
   let has=false;try{has=!!localStorage.getItem("binder-data")}catch(e){}
   const D=DEFAULT_DATA;
-  if(!has){S.cards=JSON.parse(JSON.stringify(D.cards)).map(normCard);S.brands=JSON.parse(JSON.stringify(D.brands));S.qty=Object.assign({},D.qty||{});S.seedVer=D.ver;saveLocal();return}
+  if(!has){S.cards=JSON.parse(JSON.stringify(D.cards)).map(normCard);S.brands=JSON.parse(JSON.stringify(D.brands));S.qty=Object.assign({},D.qty||{});S.seedVer=D.ver;S.syncIds=D.cards.map(c=>c.id);saveLocal();return}
   if((S.seedVer||0)>=D.ver)return;
-  let nc=0;const ids=new Set(S.cards.map(c=>c.id)),nos=new Set(S.cards.map(c=>c.no));
-  D.cards.forEach(c=>{if(!ids.has(c.id)&&!nos.has(fmtNo(c.no,c.source))){S.cards.push(normCard(JSON.parse(JSON.stringify(c))));nc++}});
-  const bids=new Set(S.brands.map(b=>b.id)),bnames=new Set(S.brands.map(b=>norm(b.name)));
-  D.brands.forEach(b=>{if(!bids.has(b.id)&&!bnames.has(norm(b.name)))S.brands.push({...b})});
-  S.seedVer=D.ver;saveLocal();
-  if(nc)setTimeout(()=>toast(`카드 ${nc}장을 바인더에 채워 넣었어요`),600);
+  // 브랜드: 없는 브랜드만 추가, 같은 이름이면 기존 것을 사용
+  const bmap={};
+  D.brands.forEach(b=>{let loc=S.brands.find(x=>x.id===b.id)||S.brands.find(x=>norm(x.name)===norm(b.name));
+    if(!loc){loc={...b};S.brands.push(loc)} bmap[b.id]=loc.id});
+  const F=["no","name","dan","rarity","type","brand","source","part","coord","star"];
+  let nc=0,uc=0;
+  D.cards.forEach(dc=>{
+    const c0=normCard(JSON.parse(JSON.stringify(dc))); if(c0.brand)c0.brand=bmap[c0.brand]||c0.brand;
+    const ex=S.cards.find(x=>x.id===c0.id);
+    if(ex){let ch=false;F.forEach(k=>{if((ex[k]||null)!==(c0[k]||null)){if(c0[k]==null||c0[k]===false||c0[k]==="")delete ex[k];else ex[k]=c0[k];ch=true}});
+      if(c0.memo&&!ex.memo){ex.memo=c0.memo;ch=true} if(ch)uc++; return}
+    if(S.cards.some(x=>x.no===c0.no&&!!x.star===!!c0.star&&norm(x.name)===norm(c0.name)))return;
+    S.cards.push(c0);nc++;
+  });
+  S.seedVer=D.ver;if(!S.syncIds)S.syncIds=D.cards.map(c=>c.id);saveLocal();
+  const msg=[nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:""].filter(Boolean).join(", ");
+  if(msg)setTimeout(()=>toast(`${msg}이 업데이트됐어요`),600);
+}
+const IS_SHARE=false;
+async function syncFromFile(){
+  let D;
+  try{const r=await fetch("./binder.json?t="+Date.now(),{cache:"no-cache"});if(!r.ok)return;D=await r.json()}catch(e){return}
+  if(!D||D.app!=="aikatsu-encore-binder"||!Array.isArray(D.cards)||!D.cards.length)return;
+  const stamp=String(D.savedAt||"");
+  if(stamp&&stamp===S.syncStamp)return;
+  const src=D.cards.filter(c=>c&&c.id&&c.name&&!String(c.name).startsWith("(예시)"));
+  // 브랜드
+  const bmap={}; const dBrands=Array.isArray(D.brands)?D.brands:[];
+  dBrands.forEach(b=>{if(!b||!b.id||!b.name)return;let loc=S.brands.find(x=>x.id===b.id)||S.brands.find(x=>norm(x.name)===norm(b.name));
+    if(!loc){loc={id:b.id,name:b.name};S.brands.push(loc)}else if(loc.id===b.id)loc.name=b.name; bmap[b.id]=loc.id});
+  // 카드
+  const F=["no","name","dan","rarity","type","brand","source","part","coord","star"];
+  const ids=new Set(src.map(c=>c.id)); let nc=0,uc=0,rc=0;
+  src.forEach(dc=>{
+    const c0={};F.concat(["id","memo"]).forEach(k=>{if(dc[k]!=null&&dc[k]!==""&&dc[k]!==false)c0[k]=dc[k]});normCard(c0);
+    if(c0.brand)c0.brand=bmap[c0.brand]||c0.brand;
+    const memo=IS_SHARE?(c0.source==="promo"?c0.memo:undefined):c0.memo; delete c0.memo;
+    let ex=S.cards.find(x=>x.id===c0.id);
+    if(!ex)ex=S.cards.find(x=>!(S.syncIds||[]).includes(x.id)&&x.no===c0.no&&!!x.star===!!c0.star&&norm(x.name)===norm(c0.name));
+    if(ex){let ch=false;F.forEach(k=>{if((ex[k]||null)!==(c0[k]||null)){if(c0[k]==null)delete ex[k];else ex[k]=c0[k];ch=true}});
+      if(ex.id!==c0.id){const old=ex.id;ex.id=c0.id;if(S.qty[old]){S.qty[c0.id]=S.qty[old];delete S.qty[old]}ch=true}
+      if(memo!==undefined&&(ex.memo||"")!==(memo||"")){if(memo)ex.memo=memo;else delete ex.memo;ch=true}
+      if(ch)uc++;return}
+    if(memo)c0.memo=memo; S.cards.push(c0); nc++;
+  });
+  // 아티팩트에서 지운 카드 정리 (앱에서 직접 추가한 카드는 그대로)
+  if(Array.isArray(S.syncIds)){const gone=new Set(S.syncIds.filter(id=>!ids.has(id)));
+    if(gone.size){S.cards=S.cards.filter(c=>{if(gone.has(c.id)){delete S.qty[c.id];delete S.photos[c.id];delete S.photos[c.id+"-b"];rc++;return false}return true})}}
+  // 사진 (개인용만)
+  let pc=0;
+  if(!IS_SHARE&&D.photos&&typeof D.photos==="object"){for(const k in D.photos){const v=D.photos[k];if(typeof v==="string"&&v.startsWith("data:image/")&&S.photos[k]!==v){S.photos[k]=v;pc++}}}
+  S.syncIds=[...ids]; S.syncStamp=stamp; saveLocal(); if(rc||pc)saveLocalPhotos(); render();
+  const parts=[nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:"",rc?`삭제 ${rc}장`:"",pc?`사진 ${pc}장`:""].filter(Boolean);
+  if(parts.length)toast(`카드 목록 파일을 반영했어요: ${parts.join(", ")}`);
 }
 async function initBackend(){
   loadPrefs(); applyTheme(S.theme); backend={kind:"local"}; loadLocal();
   seedDefaults();
   try{S.photos=await idbAll();savedPhotos=Object.assign({},S.photos)}catch(e){S.photos={};toast("사진 저장소를 열지 못했어요. 브라우저 설정에서 사이트 데이터 저장을 허용해 주세요")}
   S.loading=false; render();
+  syncFromFile();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 }
 
@@ -498,6 +561,7 @@ const cmp=(a,b)=>String(a).localeCompare(String(b),"ko",{numeric:true});
 const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function fmtNo(no,source){const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
 function baseNo(no){return String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"")}
+const starFirst=(a,b)=>(b.star?1:0)-(a.star?1:0);
 function dispNo(c){return c&&c.no?c.no+" "+(RAR[c.rarity]?c.rarity:""):""}
 function normCard(c){if(c&&c.no){const n=fmtNo(c.no,c.source);if(n!==c.no)c.no=n}return c}
 const brandById=id=>S.brands.find(b=>b.id===id);
@@ -519,7 +583,7 @@ function cardHTML(c,opts={}){
   const face=S.photos[c.id]?`<img src="${esc(S.photos[c.id])}" alt="">`:c.photo?`<img src="/_blob/${esc(c.photo)}" alt="" loading="lazy">`
     :`<div class="art t-${TYPE[c.type]?c.type:"none"}">${iconSVG(c.part,c.type)}</div>`;
   return `<div class="card ${have?"have":"missing"}">${face}
-    <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>
+    <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>${c.star?'<span class="sign" title="싸인 카드" aria-hidden="true">★</span>':""}
     ${have?`<span class="qty">×${n}</span>`:""}
     ${opts.noCap?"":`<span class="cap">${esc(c.no?dispNo(c)+" ":"")}${esc(c.name)}</span>`}</div>`;
 }
@@ -557,7 +621,7 @@ function render(){
   $("#coordSug").innerHTML=allCoords().map(x=>`<option value="${esc(x)}">`).join("");
   let html="",shown=0;
   keys.forEach((k,i)=>{
-    const all=groups[k].slice().sort(qn?((a,b)=>PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||cmp(a.no||a.name,b.no||b.name)):((a,b)=>cmp(a.no||a.name,b.no||b.name)));
+    const all=groups[k].slice().sort(qn?((a,b)=>PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||cmp(a.no||a.name,b.no||b.name)||starFirst(a,b)):((a,b)=>cmp(a.no||a.name,b.no||b.name)||starFirst(a,b)));
     const vis=all.filter(passOwn); if(!vis.length)return; shown+=vis.length;
     const h=all.filter(c=>q(c.id)>0).length, color=!qn&&S.groupBy==="type"?({lovely:"#F08DB2",cool:"#6FB6E6",sexy:"#A98AE6",pop:"#F4A06A"}[k]||"#D7B8C4"):TAB_COLORS[i%TAB_COLORS.length];
     const pages=[];const per=S.cols*S.cols;for(let p=0;p<vis.length;p+=per)pages.push(vis.slice(p,p+per));
@@ -565,7 +629,7 @@ function render(){
       <div class="tab">${!qn&&S.groupBy==="brand"&&logoOf(k)?`<img class="tlogo" src="${esc(logoOf(k))}" alt="">`:""}<h2>${esc(label(gd,k))}</h2><span class="count">${h}/${all.length}</span><span class="mini"><i style="width:${Math.round(h/all.length*100)}%"></i></span></div>
       <div class="pages" data-key="${esc(k)}" data-n="${pages.length}">
       ${pages.map(pg=>`<div class="page"><div class="grid">
-        ${pg.map(c=>`<button class="pocket ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
+        ${pg.map(c=>`<button class="pocket ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}${c.star?", 싸인 카드":""}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
         ${Array.from({length:per-pg.length},()=>'<div class="pocket slot" aria-hidden="true"></div>').join("")}
       </div></div>`).join("")}
       </div>
@@ -620,7 +684,7 @@ function openDetail(id){
     </div>
     <div class="detail-top">
       <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span>${esc(c.name)}</h3><p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
-      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span><span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
+      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 싸인</span>':""}<span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
     </div>
     ${c.memo?`<div class="memo"><p class="label">메모</p>${esc(c.memo)}</div>`:""}
     <div class="stepper"><span>가지고 있는 장수</span><div class="ctrl">
@@ -709,11 +773,13 @@ $("#bulkInput").addEventListener("change",async e=>{
   const files=[...e.target.files]; e.target.value=""; if(!files.length)return;
   if(dMore.open)dMore.close();
   const byNo={},byName={};
-  S.cards.forEach(c=>{if(c.no){byNo[fileKey(c.no)]=c;byNo[fileKey(dispNo(c))]=c;if(!byNo[fileKey(baseNo(c.no))])byNo[fileKey(baseNo(c.no))]=c} byName[fileKey(c.name)]=c});
+  const byStar={};
+  S.cards.forEach(c=>{const M=c.star?byStar:byNo;if(c.no){M[fileKey(c.no)]=c;M[fileKey(dispNo(c))]=c;if(!M[fileKey(baseNo(c.no))])M[fileKey(baseNo(c.no))]=c} if(!c.star||!byName[fileKey(c.name)])byName[fileKey(c.name)]=c});
+  const look=k=>{const ms=k.match(/^(.*?)-?(★|싸인|sign)$/);if(ms&&byStar[ms[1]])return byStar[ms[1]];return byNo[k]||byName[k]};
   const pairs=[],miss=[];
   files.forEach(f=>{let k=fileKey(f.name),side="f";const m=k.match(/^(.*?)-?(뒷면|뒷장|후면|뒤|back|b)$/);
-    if(!(byNo[k]||byName[k])&&m&&(byNo[m[1]]||byName[m[1]])){k=m[1];side="b"}
-    const c=byNo[k]||byName[k];c?pairs.push([f,c,side]):miss.push(f.name)});
+    if(!look(k)&&m&&look(m[1])){k=m[1];side="b"}
+    const c=look(k);c?pairs.push([f,c,side]):miss.push(f.name)});
   if(!pairs.length){toast("카드 번호나 이름과 같은 파일 이름이 없어요. 파일 이름을 카드 번호로 바꿔 주세요");return}
   let ok=0,fail=0;
   for(let i=0;i<pairs.length;i++){
@@ -755,6 +821,7 @@ function openForm(id){
       <div class="field"><div class="flabel"><label>브랜드</label><button type="button" class="linkbtn" data-act="brands">브랜드 관리</button></div><div id="brandPick">${brandPickHTML(brandById(c.brand)?c.brand:"none")}</div></div>
       <div class="field"><label>배출처</label>${pickHTML("source",SRC,SRC_ORDER,c.source)}</div>
       <div class="field"><label>부위</label>${pickHTML("part",PART,PART_ORDER,c.part)}</div>
+      <div class="field"><label>싸인</label><button type="button" class="chip starchip" id="fStar" aria-pressed="${!!c.star}">★ 싸인 카드</button></div>
       <div class="field"><label for="fCoord">코디 이름 (선택)</label><input id="fCoord" list="coordList" value="${esc(c.coord)}" placeholder="같은 코디끼리 묶어서 보여 줘요"></div>
       <div class="field"><label for="fMemo">메모 (선택)</label><textarea id="fMemo" rows="3" placeholder="예: 잡지 ○월호 부록, 이벤트 입장 특전, 교환해서 받음">${esc(c.memo)}</textarea></div>
       <datalist id="danList">${allDans().map(d=>`<option value="${esc(d)}">`).join("")}</datalist>
@@ -768,6 +835,7 @@ function openForm(id){
 $("#formBody").addEventListener("click",e=>{
   const b=e.target.closest(".pick .chip"); if(b){b.parentElement.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));if(b.parentElement.dataset.pick==="source")refreshAutoNo()}
   if(e.target.id==="saveMore")saveForm(true);
+  const st=e.target.closest("#fStar"); if(st)st.setAttribute("aria-pressed",st.getAttribute("aria-pressed")!=="true");
   if(e.target.closest('[data-act="brands"]'))openBrands();
 });
 $("#formBody").addEventListener("input",e=>{
@@ -778,8 +846,9 @@ $("#formBody").addEventListener("submit",e=>{e.preventDefault();saveForm(false)}
 function saveForm(more){
   const name=$("#fName").value.trim(); if(!name){$("#fName").focus();toast("카드 이름을 적어 주세요");return}
   const pv=k=>{const b=document.querySelector(`[data-pick="${k}"] [aria-pressed="true"]`);return b?b.dataset.v:null};
-  const data={no:"",name,dan:$("#fDan").value.trim(),rarity:pv("rarity")||"N",type:pv("type")||"none",brand:pv("brand")||"none",source:pv("source")||"arcade",part:pv("part")||"top",coord:$("#fCoord").value.trim(),memo:$("#fMemo").value.trim()};
+  const data={no:"",name,dan:$("#fDan").value.trim(),rarity:pv("rarity")||"N",type:pv("type")||"none",brand:pv("brand")||"none",source:pv("source")||"arcade",part:pv("part")||"top",star:$("#fStar").getAttribute("aria-pressed")==="true",coord:$("#fCoord").value.trim(),memo:$("#fMemo").value.trim()};
   data.no=fmtNo($("#fNo").value,data.source);
+  if(!data.star)delete data.star;
   if(data.type==="none")delete data.type;
   if(data.brand==="none")delete data.brand;
   if(!data.coord)delete data.coord; if(!data.memo)delete data.memo;
@@ -821,7 +890,7 @@ function openMore(view){moreView=view||null;
   } else if(view==="theme"){
     const cur=(S.theme||THEME_DEFAULT).toUpperCase();
     body.innerHTML=`<div class="grab"></div><h3>테마 색 바꾸기</h3>
-      <p class="muted" style="margin:4px 0 14px">표지, 버튼, 포켓, 인덱스 탭 색이 모두 바뀌어요. 하얀색 포인트와 카드 타입 색(러블리·쿨·섹시·팝)은 그대로 유지돼요.</p>
+      <p class="muted" style="margin:4px 0 14px">표지, 버튼, 포켓, 인덱스 탭 색이 모두 바뀌어요. 하얀색 포인트와 카드 타입 색(큐트·쿨·섹시·팝)은 그대로 유지돼요.</p>
       <div class="swatches">${THEME_PRESETS.map(([n,c])=>`<button class="sw" data-act="sw" data-c="${c}" aria-pressed="${cur===c.toUpperCase()}"><span style="background:${c}"></span>${n}</button>`).join("")}</div>
       <div class="custom-color"><label for="themePick">직접 고르기</label><input type="color" id="themePick" value="${esc(S.theme||THEME_DEFAULT)}"><span class="muted">${esc(cur)}</span></div>
       <div class="row" style="margin-top:14px"><button class="btn" data-act="back">뒤로</button><button class="btn grow" data-act="sw" data-c="${THEME_DEFAULT}">기본 연분홍으로</button></div>`;
@@ -830,7 +899,7 @@ function openMore(view){moreView=view||null;
     pk.addEventListener("change",()=>setTheme(pk.value));
   } else if(view==="import"){
     body.innerHTML=`<div class="grab"></div><h3>목록 붙여넣기</h3>
-      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
+      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 싸인 카드는 번호 뒤에 ★를 붙여 주세요 (예: 1-01★). 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
       <div class="field"><textarea id="impText" rows="8" placeholder="1-01	스타 리본 탑스	1탄	앙코르 레어	게임기체	상의	스타 리본	1"></textarea></div>
       <p class="muted" id="impInfo" style="margin:8px 0 12px">붙여넣으면 몇 장을 읽었는지 알려 드려요</p>
       <div class="row"><button class="btn" data-act="back">뒤로</button><button class="btn primary grow" id="impGo" disabled>추가하기</button></div>`;
@@ -840,7 +909,7 @@ function openMore(view){moreView=view||null;
     setTimeout(()=>ta.focus(),50);
   } else if(view==="export"){
     const head="번호\t이름\t탄\t등급\t타입\t브랜드\t배출처\t부위\t코디\t수량\t메모";
-    const lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||cmp(a.no,b.no)).map(c=>[dispNo(c),c.name,c.dan,RAR[c.rarity],TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],c.coord||"",q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
+    const lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||cmp(a.no,b.no)||starFirst(a,b)).map(c=>[dispNo(c)+(c.star?"★":""),c.name,c.dan,RAR[c.rarity],TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],c.coord||"",q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
     body.innerHTML=`<div class="grab"></div><h3>목록 복사하기</h3>
       <p class="muted" style="margin-bottom:10px">전체 선택해서 복사한 뒤 스프레드시트에 붙여넣으면 백업이 돼요. 다시 붙여넣기로 불러올 수도 있어요.</p>
       <div class="field"><textarea id="expText" rows="9" readonly>${esc([head,...lines].join("\n"))}</textarea></div>
@@ -849,13 +918,15 @@ function openMore(view){moreView=view||null;
     body.innerHTML=`<div class="grab"></div><h3>더보기</h3><div class="menu">
       <button class="btn" data-act="theme"><span class="menu-sw" style="background:${esc(S.theme)}"></span>테마 색 바꾸기<small>연분홍 대신 바인더의 메인 색을 골라요. 하얀색 포인트는 그대로예요</small></button>
       <button class="btn" data-act="brands">브랜드 관리<small>브랜드 이름과 로고를 등록하고 고쳐요</small></button>
-      <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 뒷면은 번호 뒤에 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
+      <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 싸인 카드는 번호 뒤에 ★, 뒷면은 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
       <button class="btn" data-act="import">목록 붙여넣기<small>스프레드시트에 정리한 카드를 한 번에 추가해요</small></button>
       <button class="btn" data-act="export">목록 복사하기<small>수량까지 포함해 표 형태로 백업해요</small></button>
-      <button class="btn" data-act="backup">백업 파일 저장하기<small>카드, 수량, 메모, 브랜드, 사진, 테마 색을 파일 하나로 저장해요</small></button>
+      <button class="btn" data-act="backup">백업 파일 저장하기<small>카드, 수량, 메모, 브랜드, 테마 색${S.bkPhotos?", 사진":""}을 파일 하나로 저장해요</small></button>
+      <label class="bk-switch"><input type="checkbox" id="bkPhotos" ${S.bkPhotos?"checked":""}><span class="sw-track"></span>백업에 사진도 함께 저장</label>
       <button class="btn" data-act="restore">백업 파일 불러오기<small>저장해 둔 백업 파일로 바인더를 되돌려요</small></button>
       <button class="btn" data-act="hardreload">최신 버전 다시 받기<small>기록과 사진은 그대로 두고 앱 파일만 새로 받아요</small></button>
       <p class="muted">앱 버전 ${APP_VERSION}</p>
+      <p class="muted">카드 목록 파일: ${S.syncStamp?esc(new Date(S.syncStamp).toLocaleString("ko-KR"))+" 저장본 반영됨":"아직 반영된 파일 없음"}</p>
       <p class="muted">기록은 이 휴대폰 안에만 저장돼요. 휴대폰을 바꾸거나 앱을 지우기 전에 백업 파일을 꼭 저장해 두세요.</p>
     </div>`;
   }
@@ -888,7 +959,8 @@ function parseImport(text){
     if(!line.trim())return; const c=line.includes("\t")?line.split("\t"):line.split(",");
     const cell=k=>(c[k]||"").trim();
     if(i===0&&/번호|이름/.test(cell(0)+cell(1)))return;
-    const r={no:cell(0),name:cell(1),dan:cell(2),rarity:mapRarity(cell(3)),type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
+    const star=/★|싸인/.test(cell(0));
+    const r={star,no:cell(0).replace(/★|싸인/g,"").trim(),name:cell(1),dan:cell(2),rarity:mapRarity(cell(3)),type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
     if(!r.name||!r.rarity||!r.source||!r.part){bad.push(i+1);return} rows.push(r);
   });
   return {rows,bad};
@@ -897,9 +969,9 @@ function doImport(){
   const {rows}=parseImport($("#impText").value); let added=0,updated=0,newBrand=false;
   rows.forEach(r=>{
     r.no=fmtNo(r.no,r.source);
-    const ex=r.no?S.cards.find(c=>c.no===r.no||baseNo(c.no)===baseNo(r.no)&&c.source===r.source):null;
-    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.coord)data.coord=r.coord; if(r.memo)data.memo=r.memo;
-    let id; if(ex){Object.assign(ex,data);if(!r.type)delete ex.type; if(!r.brandName)delete ex.brand; if(!r.coord)delete ex.coord; if(!r.memo)delete ex.memo;id=ex.id;updated++} else {id=uid();S.cards.push({id,...data});added++}
+    const ex=r.no?S.cards.find(c=>!!c.star===r.star&&(c.no===r.no||baseNo(c.no)===baseNo(r.no)&&c.source===r.source)):null;
+    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.star)data.star=true; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.coord)data.coord=r.coord; if(r.memo)data.memo=r.memo;
+    let id; if(ex){Object.assign(ex,data);if(!r.star)delete ex.star; if(!r.type)delete ex.type; if(!r.brandName)delete ex.brand; if(!r.coord)delete ex.coord; if(!r.memo)delete ex.memo;id=ex.id;updated++} else {id=uid();S.cards.push({id,...data});added++}
     if(r.qty>0)S.qty[id]=Math.min(99,r.qty);
   });
   scheduleSave("cat"); scheduleSave("own"); if(newBrand)scheduleSave("brand"); render(); dMore.close();
@@ -914,7 +986,7 @@ function pkGridHTML(){
   const qn=norm(pkQuery);
   const list=S.cards.filter(c=>(pkFilter==="all"||(pkFilter==="none"?!brandById(c.brand):c.brand===b.id))&&
     (!qn||norm(c.name).includes(qn)||norm(c.no||"").includes(qn)||norm(c.coord||"").includes(qn)))
-    .sort((x,y)=>(x.source==="promo")-(y.source==="promo")||cmp(x.dan||"",y.dan||"")||cmp(x.no||x.name,y.no||y.name));
+    .sort((x,y)=>(x.source==="promo")-(y.source==="promo")||cmp(x.dan||"",y.dan||"")||cmp(x.no||x.name,y.no||y.name)||starFirst(x,y));
   if(!list.length)return '<p class="muted" style="text-align:center;padding:24px 0">조건에 맞는 카드가 없어요</p>';
   return `<div class="pk-grid">${list.map(c=>{const on=c.brand===b.id, other=!on&&brandById(c.brand);
     return `<button class="pk-card" data-pk="${esc(c.id)}" aria-pressed="${on}" aria-label="${esc(c.name)}${on?", 연결됨":""}">
@@ -998,17 +1070,18 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.09.29-4";
+const APP_VERSION="2026.09.30-3";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
   try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith(PREFIX_CACHE)).map(k=>caches.delete(k)))}catch(e){}
   setTimeout(()=>location.replace(location.pathname+"?v="+Date.now()),300);
 }
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="bkPhotos"){S.bkPhotos=e.target.checked;savePrefs();if(dMore.open&&!moreView)openMore()}});
 /* ---------- backup ---------- */
 let pendingRestore=null;
 async function saveBackup(){
-  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),brands:S.brands,photos:S.photos};
+  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),brands:S.brands,photos:S.bkPhotos?S.photos:{}};
   const d=new Date(),stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
   const name=`aikatsu-encore-backup-${stamp}.json`;
   const file=new File([JSON.stringify(data)],name,{type:"application/json"});
