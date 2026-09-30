@@ -426,7 +426,7 @@ const SHAPE = {
 function iconSVG(part,type){const sh=SHAPE[part];if(!sh)return "";const [d,r,,deco]=sh;
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="outline" d="${d}" fill-rule="${r}"/><path class="body" d="${d}" fill-rule="${r}"/>${deco?`<path class="deco" d="${deco}"/>`:""}</svg>`}
 
-const S = {theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
+const S = {theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
   last:{dan:"",rarity:"N",type:"lovely",source:"arcade",part:"top"}};
 let backend = {kind:"none"}, assets = null;
 
@@ -434,7 +434,7 @@ let backend = {kind:"none"}, assets = null;
 function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(p){
   if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
   if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
-  if(p.f)DIMS.forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
+  if(p.f)DIMS.concat(["sign"]).forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); S.f.sign=S.f.sign.filter(v=>v==="star"); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
 function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}}
 
 /* ---------- storage ---------- */
@@ -601,7 +601,7 @@ function render(){
   $("#binder").className="n"+S.cols;
   document.querySelectorAll("#groupSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===S.groupBy));
   document.querySelectorAll("#ownRow [data-own]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.own===S.own));
-  const fc=DIMS.reduce((a,d)=>a+S.f[d].length,0);
+  const fc=DIMS.reduce((a,d)=>a+S.f[d].length,0)+S.f.sign.length;
   $("#filterBtn").innerHTML="필터"+(fc?`<span class="badge">${fc}</span>`:"");
 
   const binder=$("#binder");
@@ -611,7 +611,7 @@ function render(){
     <p>카드를 한 장씩 추가하거나, 스프레드시트에 정리한 목록을 한 번에 붙여넣을 수 있어요.</p>
     <div class="row" style="justify-content:center"><button class="btn primary" data-act="add">카드 추가</button><button class="btn" data-act="import">목록 붙여넣기</button></div></div>`;return}
 
-  const passDims=c=>DIMS.every(d=>!S.f[d].length||S.f[d].includes(c[d]));
+  const passDims=c=>DIMS.every(d=>!S.f[d].length||S.f[d].includes(c[d]))&&(!S.f.sign.includes("star")||!!c.star);
   const passOwn=c=>S.own==="all"||(S.own==="have")===(q(c.id)>0);
   const qn=norm(S.search), gd=qn?"coord":S.groupBy;
   const passSearch=c=>!qn||norm(c.coord||"").includes(qn)||norm(c.name).includes(qn);
@@ -864,6 +864,7 @@ const dFilter=$("#dFilter");
 function openFilter(){
   const grp=(dim,title,keys)=>keys.length?`<div class="fgroup"><p class="label">${title}</p><div class="pick" data-fdim="${dim}">${keys.map(k=>`<button class="chip" data-v="${esc(k)}" aria-pressed="${S.f[dim].includes(k)}">${esc(label(dim,k))}</button>`).join("")}</div></div>`:"";
   $("#filterBody").innerHTML=`<div class="grab"></div><h3>필터</h3><p class="muted" style="margin-bottom:14px">여러 개를 고르면 그중 하나라도 맞는 카드가 보여요</p>
+    <div class="fgroup"><p class="label">싸인</p><div class="pick" data-fdim="sign"><button class="chip" data-v="star" aria-pressed="${S.f.sign.includes("star")}">★ 싸인 카드</button></div></div>
     ${grp("dan","탄",allDans())}${grp("rarity","등급",RAR_ORDER)}${grp("type","타입",TYPE_ORDER)}${grp("brand","브랜드",S.brands.map(b=>b.id))}${grp("source","배출처",SRC_ORDER)}${grp("part","부위",PART_ORDER)}
     <div class="row"><button class="btn" data-act="fclear">필터 지우기</button><button class="btn primary grow" data-act="fclose">완료</button></div>`;
   if(!dFilter.open)dFilter.showModal();
@@ -872,7 +873,7 @@ $("#filterBody").addEventListener("click",e=>{
   const b=e.target.closest("[data-fdim] .chip");
   if(b){const d=b.parentElement.dataset.fdim,v=b.dataset.v,a=S.f[d];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);savePrefs();render();openFilter();return}
   const a=e.target.closest("[data-act]"); if(!a)return;
-  if(a.dataset.act==="fclear"){DIMS.forEach(d=>S.f[d]=[]);savePrefs();render();openFilter()}
+  if(a.dataset.act==="fclear"){DIMS.forEach(d=>S.f[d]=[]);S.f.sign=[];savePrefs();render();openFilter()}
   if(a.dataset.act==="fclose")dFilter.close();
 });
 
@@ -1070,7 +1071,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.09.30-3";
+const APP_VERSION="2026.09.30-5";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1118,7 +1119,7 @@ $("#quickBtn").addEventListener("click",()=>{S.quick=!S.quick;$("#quickBtn").set
 $("#binder").addEventListener("click",e=>{
   const a=e.target.closest("[data-act]");
   if(a){if(a.dataset.act==="add")openForm(null);if(a.dataset.act==="import")openMore("import");
-    if(a.dataset.act==="clear"){DIMS.forEach(d=>S.f[d]=[]);S.own="all";S.search="";$("#searchIn").value="";savePrefs();render()}
+    if(a.dataset.act==="clear"){DIMS.forEach(d=>S.f[d]=[]);S.f.sign=[];S.own="all";S.search="";$("#searchIn").value="";savePrefs();render()}
     if(a.dataset.act==="sclear"){S.search="";$("#searchIn").value="";render()} return}
   const p=e.target.closest(".pocket[data-id]"); if(!p)return; const id=p.dataset.id, c=byId(id);
   if(S.quick){const before=q(id); setQty(id,before+1); toast(`${c.name} ${before+1}장`,"되돌리기",()=>setQty(id,before))}
