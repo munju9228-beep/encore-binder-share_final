@@ -584,7 +584,10 @@ const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function fmtNo(no,source){const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
 function baseNo(no){return String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"")}
 const starFirst=(a,b)=>(b.star?1:0)-(a.star?1:0);
-function dispNo(c){return c&&c.no?c.no+" "+(RAR[c.rarity]?c.rarity:""):""}
+function blockSorter(list){const mn={};list.forEach(c=>{if(c.coord){const k=c.coord;if(!(k in mn)||cmp(c.no||c.name,mn[k])<0)mn[k]=c.no||c.name}});
+  const bk=c=>c.coord?mn[c.coord]:(c.no||c.name);
+  return (a,b)=>cmp(bk(a),bk(b))||cmp(a.coord||"",b.coord||"")||starFirst(a,b)||cmp(a.no||a.name,b.no||b.name)}
+function dispNo(c){return c&&c.no?c.no+" "+(RAR[c.rarity]?c.rarity:"")+(c.star?"★":""):""}
 function normCard(c){if(c&&c.no){const n=fmtNo(c.no,c.source);if(n!==c.no)c.no=n}return c}
 const brandById=id=>S.brands.find(b=>b.id===id);
 const logoOf=id=>S.photos["logo-"+id]||"";
@@ -605,7 +608,7 @@ function cardHTML(c,opts={}){
   const face=S.photos[c.id]?`<img src="${esc(S.photos[c.id])}" alt="">`:c.photo?`<img src="/_blob/${esc(c.photo)}" alt="" loading="lazy">`
     :`<div class="art t-${TYPE[c.type]?c.type:"none"}">${iconSVG(c.part,c.type)}</div>`;
   return `<div class="card ${have?"have":"missing"}">${face}
-    <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>${c.star?'<span class="sign" title="싸인 카드" aria-hidden="true">★</span>':""}
+    <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>${c.star?'<span class="sign" title="패러렐 카드" aria-hidden="true">★</span>':""}
     ${have?`<span class="qty">×${n}</span>`:""}
     ${opts.noCap?"":`<span class="cap">${esc(c.no?dispNo(c)+" ":"")}${esc(c.name)}</span>`}</div>`;
 }
@@ -643,7 +646,7 @@ function render(){
   $("#coordSug").innerHTML=allCoords().map(x=>`<option value="${esc(x)}">`).join("");
   let html="",shown=0; const nav=[];
   keys.forEach((k,i)=>{
-    const all=groups[k].slice().sort(qn?((a,b)=>PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||cmp(a.no||a.name,b.no||b.name)||starFirst(a,b)):((a,b)=>cmp(a.no||a.name,b.no||b.name)||starFirst(a,b)));
+    const all=groups[k].slice().sort(qn?((a,b)=>starFirst(a,b)||PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||cmp(a.no||a.name,b.no||b.name)):blockSorter(groups[k]));
     const vis=all.filter(passOwn); if(!vis.length)return; shown+=vis.length; vis.forEach(c=>nav.push(c.id));
     const h=all.filter(c=>q(c.id)>0).length, color=!qn&&S.groupBy==="type"?({lovely:"#F08DB2",cool:"#6FB6E6",sexy:"#A98AE6",pop:"#F4A06A"}[k]||"#D7B8C4"):TAB_COLORS[i%TAB_COLORS.length];
     const pages=[];const per=S.cols*S.cols;for(let p=0;p<vis.length;p+=per)pages.push(vis.slice(p,p+per));
@@ -651,7 +654,7 @@ function render(){
       <div class="tab">${!qn&&S.groupBy==="brand"&&logoOf(k)?`<img class="tlogo" src="${esc(logoOf(k))}" alt="">`:""}<h2>${esc(label(gd,k))}</h2><span class="count">${h}/${all.length}</span><span class="mini"><i style="width:${Math.round(h/all.length*100)}%"></i></span></div>
       <div class="pages" data-key="${esc(k)}" data-n="${pages.length}">
       ${pages.map(pg=>`<div class="page"><div class="grid">
-        ${pg.map(c=>`<button class="pocket ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}${c.star?", 싸인 카드":""}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
+        ${pg.map(c=>`<button class="pocket ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}${c.star?", 패러렐 카드":""}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
         ${Array.from({length:per-pg.length},()=>'<div class="pocket slot" aria-hidden="true"></div>').join("")}
       </div></div>`).join("")}
       </div>
@@ -709,7 +712,7 @@ function openDetail(id){
     </div>
     <div class="detail-top">
       <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span>${esc(c.name)}<button class="heart" data-act="want" aria-pressed="${!!S.want[c.id]}" aria-label="원해요">${S.want[c.id]?"♥":"♡"}</button></h3>${c.jname?`<p class="jname" lang="ja">${esc(c.jname)}</p>`:""}<p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
-      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 싸인</span>':""}<span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
+      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 패러렐</span>':""}<span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
     </div>
     ${c.memo?`<div class="memo"><p class="label">메모</p>${esc(c.memo)}</div>`:""}
     <div class="stepper"><span>가지고 있는 장수</span><div class="ctrl">
@@ -809,7 +812,7 @@ $("#bulkInput").addEventListener("change",async e=>{
   const byNo={},byName={};
   const byStar={};
   S.cards.forEach(c=>{const M=c.star?byStar:byNo;if(c.no){M[fileKey(c.no)]=c;M[fileKey(dispNo(c))]=c;if(!M[fileKey(baseNo(c.no))])M[fileKey(baseNo(c.no))]=c} if(!c.star||!byName[fileKey(c.name)])byName[fileKey(c.name)]=c});
-  const look=k=>{const ms=k.match(/^(.*?)-?(★|싸인|sign)$/);if(ms&&byStar[ms[1]])return byStar[ms[1]];return byNo[k]||byName[k]};
+  const look=k=>{const ms=k.match(/^(.*?)-?(★|싸인|sign|패러렐|parallel|p)$/);if(ms&&byStar[ms[1]])return byStar[ms[1]];return byNo[k]||byName[k]};
   const pairs=[],miss=[];
   files.forEach(f=>{let k=fileKey(f.name),side="f";const m=k.match(/^(.*?)-?(뒷면|뒷장|후면|뒤|back|b)$/);
     if(!look(k)&&m&&look(m[1])){k=m[1];side="b"}
@@ -856,7 +859,7 @@ function openForm(id){
       <div class="field"><div class="flabel"><label>브랜드</label><button type="button" class="linkbtn" data-act="brands">브랜드 관리</button></div><div id="brandPick">${brandPickHTML(brandById(c.brand)?c.brand:"none")}</div></div>
       <div class="field"><label>배출처</label>${pickHTML("source",SRC,SRC_ORDER,c.source)}</div>
       <div class="field"><label>부위</label>${pickHTML("part",PART,PART_ORDER,c.part)}</div>
-      <div class="field"><label>싸인</label><button type="button" class="chip starchip" id="fStar" aria-pressed="${!!c.star}">★ 싸인 카드</button></div>
+      <div class="field"><label>패러렐</label><button type="button" class="chip starchip" id="fStar" aria-pressed="${!!c.star}">★ 패러렐 카드</button></div>
       <div class="field"><label for="fCoord">코디 이름 (선택)</label><input id="fCoord" list="coordList" value="${esc(c.coord)}" placeholder="같은 코디끼리 묶어서 보여 줘요"></div>
       <div class="field"><label for="fMemo">메모 (선택)</label><textarea id="fMemo" rows="3" placeholder="예: 잡지 ○월호 부록, 이벤트 입장 특전, 교환해서 받음">${esc(c.memo)}</textarea></div>
       <datalist id="danList">${allDans().map(d=>`<option value="${esc(d)}">`).join("")}</datalist>
@@ -870,7 +873,7 @@ function openForm(id){
 $("#formBody").addEventListener("click",e=>{
   const b=e.target.closest(".pick .chip"); if(b){b.parentElement.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));if(b.parentElement.dataset.pick==="source")refreshAutoNo()}
   if(e.target.id==="saveMore")saveForm(true);
-  const st=e.target.closest("#fStar"); if(st)st.setAttribute("aria-pressed",st.getAttribute("aria-pressed")!=="true");
+  const st=e.target.closest("#fStar"); if(st){st.setAttribute("aria-pressed",st.getAttribute("aria-pressed")!=="true")}
   if(e.target.closest('[data-act="brands"]'))openBrands();
 });
 $("#formBody").addEventListener("input",e=>{
@@ -903,7 +906,7 @@ function openFilter(){
   const grp=(dim,title,keys)=>keys.length?`<div class="fgroup"><p class="label">${title}</p><div class="pick" data-fdim="${dim}">${keys.map(k=>`<button class="chip" data-v="${esc(k)}" aria-pressed="${S.f[dim].includes(k)}">${esc(label(dim,k))}</button>`).join("")}</div></div>`:"";
   $("#filterBody").innerHTML=`<div class="grab"></div><h3>필터</h3><p class="muted" style="margin-bottom:14px">여러 개를 고르면 그중 하나라도 맞는 카드가 보여요</p>
     <div class="fgroup"><p class="label">원해요</p><div class="pick" data-fdim="want"><button class="chip wantchip" data-v="yes" aria-pressed="${S.f.want.includes("yes")}">♥ 원해요</button></div></div>
-    <div class="fgroup"><p class="label">싸인</p><div class="pick" data-fdim="sign"><button class="chip" data-v="star" aria-pressed="${S.f.sign.includes("star")}">★ 싸인 카드</button></div></div>
+    <div class="fgroup"><p class="label">패러렐</p><div class="pick" data-fdim="sign"><button class="chip" data-v="star" aria-pressed="${S.f.sign.includes("star")}">★ 패러렐 카드</button></div></div>
     ${grp("dan","탄",allDans())}${grp("rarity","등급",RAR_ORDER)}${grp("type","타입",TYPE_ORDER)}${grp("brand","브랜드",S.brands.map(b=>b.id))}${grp("source","배출처",SRC_ORDER)}${grp("part","부위",PART_ORDER)}
     <div class="row"><button class="btn" data-act="fclear">필터 지우기</button><button class="btn primary grow" data-act="fclose">완료</button></div>`;
   if(!dFilter.open)dFilter.showModal();
@@ -939,7 +942,7 @@ function openMore(view){moreView=view||null;
     pk.addEventListener("change",()=>setTheme(pk.value));
   } else if(view==="import"){
     body.innerHTML=`<div class="grab"></div><h3>목록 붙여넣기</h3>
-      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 싸인 카드는 번호 뒤에 ★를 붙여 주세요 (예: 1-01★). 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
+      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 패러렐 카드는 번호 뒤에 ★를 붙여 주세요 (예: 1-01★). 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
       <div class="field"><textarea id="impText" rows="8" placeholder="1-01	스타 리본 탑스	1탄	앙코르 레어	게임기체	상의	스타 리본	1"></textarea></div>
       <p class="muted" id="impInfo" style="margin:8px 0 12px">붙여넣으면 몇 장을 읽었는지 알려 드려요</p>
       <div class="row"><button class="btn" data-act="back">뒤로</button><button class="btn primary grow" id="impGo" disabled>추가하기</button></div>`;
@@ -949,7 +952,7 @@ function openMore(view){moreView=view||null;
     setTimeout(()=>ta.focus(),50);
   } else if(view==="export"){
     const head="번호\t이름\t탄\t등급\t타입\t브랜드\t배출처\t부위\t코디\t수량\t메모";
-    const lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||cmp(a.no,b.no)||starFirst(a,b)).map(c=>[dispNo(c)+(c.star?"★":""),c.name,c.dan,RAR[c.rarity],TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],c.coord||"",q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
+    const bs=blockSorter(S.cards),lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||bs(a,b)).map(c=>[dispNo(c),c.name,c.dan,RAR[c.rarity],TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],c.coord||"",q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
     body.innerHTML=`<div class="grab"></div><h3>목록 복사하기</h3>
       <p class="muted" style="margin-bottom:10px">전체 선택해서 복사한 뒤 스프레드시트에 붙여넣으면 백업이 돼요. 다시 붙여넣기로 불러올 수도 있어요.</p>
       <div class="field"><textarea id="expText" rows="9" readonly>${esc([head,...lines].join("\n"))}</textarea></div>
@@ -958,7 +961,7 @@ function openMore(view){moreView=view||null;
     body.innerHTML=`<div class="grab"></div><h3>더보기</h3><div class="menu">
       <button class="btn" data-act="theme"><span class="menu-sw" style="background:${esc(S.theme)}"></span>테마 색 바꾸기<small>연분홍 대신 바인더의 메인 색을 골라요. 하얀색 포인트는 그대로예요</small></button>
       <button class="btn" data-act="brands">브랜드 관리<small>브랜드 이름과 로고를 등록하고 고쳐요</small></button>
-      <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 싸인 카드는 번호 뒤에 ★, 뒷면은 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
+      <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 패러렐 카드는 번호 뒤에 ★, 뒷면은 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
       <button class="btn" data-act="import">목록 붙여넣기<small>스프레드시트에 정리한 카드를 한 번에 추가해요</small></button>
       <button class="btn" data-act="export">목록 복사하기<small>수량까지 포함해 표 형태로 백업해요</small></button>
       <button class="btn" data-act="backup">백업 파일 저장하기<small>카드, 수량, 메모, 브랜드, 테마 색${S.bkPhotos?", 사진":""}을 파일 하나로 저장해요</small></button>
@@ -999,8 +1002,8 @@ function parseImport(text){
     if(!line.trim())return; const c=line.includes("\t")?line.split("\t"):line.split(",");
     const cell=k=>(c[k]||"").trim();
     if(i===0&&/번호|이름/.test(cell(0)+cell(1)))return;
-    const star=/★|싸인/.test(cell(0));
-    const r={star,no:cell(0).replace(/★|싸인/g,"").trim(),name:cell(1),dan:cell(2),rarity:mapRarity(cell(3)),type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
+    const star=/★|싸인|패러렐/.test(cell(0));
+    const r={star,no:cell(0).replace(/★|싸인|패러렐/g,"").trim(),name:cell(1),dan:cell(2),rarity:mapRarity(cell(3)),type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
     if(!r.name||!r.rarity||!r.source||!r.part){bad.push(i+1);return} rows.push(r);
   });
   return {rows,bad};
@@ -1026,7 +1029,7 @@ function pkGridHTML(){
   const qn=norm(pkQuery);
   const list=S.cards.filter(c=>(pkFilter==="all"||(pkFilter==="none"?!brandById(c.brand):c.brand===b.id))&&
     (!qn||norm(c.name).includes(qn)||norm(c.no||"").includes(qn)||norm(c.coord||"").includes(qn)))
-    .sort((x,y)=>(x.source==="promo")-(y.source==="promo")||cmp(x.dan||"",y.dan||"")||cmp(x.no||x.name,y.no||y.name)||starFirst(x,y));
+    .sort(((bs)=>(x,y)=>(x.source==="promo")-(y.source==="promo")||cmp(x.dan||"",y.dan||"")||bs(x,y))(blockSorter(S.cards)));
   if(!list.length)return '<p class="muted" style="text-align:center;padding:24px 0">조건에 맞는 카드가 없어요</p>';
   return `<div class="pk-grid">${list.map(c=>{const on=c.brand===b.id, other=!on&&brandById(c.brand);
     return `<button class="pk-card" data-pk="${esc(c.id)}" aria-pressed="${on}" aria-label="${esc(c.name)}${on?", 연결됨":""}">
@@ -1110,7 +1113,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.09.30-8";
+const APP_VERSION="2026.10.01-2";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
