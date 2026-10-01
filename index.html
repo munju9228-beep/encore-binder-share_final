@@ -107,14 +107,14 @@ button{cursor:pointer}
 .n3 .pocket{padding:4px}
 .n3 .cap{font-size:11px;padding:10px 5px 4px}
 .n3 .rar{font-size:11px;padding:3px 5px 2px;top:4px;left:4px}
-.n3 .qty{font-size:12px;padding:3px 6px 2px;top:4px;right:4px;border-width:1.5px}
+.n3 .qty{font-size:12px;padding:3px 6px 2px;bottom:25px;left:4px;border-width:1.5px}
 .n4 .grid{grid-template-columns:repeat(4,1fr);gap:5px}
 .n4 .page{padding:10px 8px 10px 28px}
 .n4 .pocket{padding:3px;border-radius:6px}
 .n4 .pocket::after{border-radius:6px}
 .n4 .cap{display:none}
 .n4 .rar{font-size:9px;padding:2px 3px 1px;top:3px;left:3px;border-radius:4px}
-.n4 .qty{font-size:10px;padding:2px 4px 1px;top:3px;right:3px;border-width:1px;border-radius:6px}
+.n4 .qty{font-size:10px;padding:2px 4px 1px;bottom:3px;left:3px;border-width:1px;border-radius:6px}
 .n4 .art svg{width:74%}
 .notice{margin:14px 16px 0;padding:12px 14px;border-radius:14px;background:#FFF;border:2px solid var(--pink);color:var(--ink);font-size:14px}
 .art .deco{fill:var(--tc)}
@@ -198,13 +198,16 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.slide-l .sides,.slide-r .sides,.slide-l .detail-top,.slide-r .detail-top{animation:none}}
 .side{position:relative}
 .wheart{position:absolute;z-index:2;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:#fff;color:#E0457B;font-size:13px;line-height:1;display:grid;place-items:center;box-shadow:0 0 0 1.5px #F59AB8,0 1px 2px rgba(0,0,0,.2)}
-.wheart.low{top:40px}
-.n3 .wheart{width:16px;height:16px;font-size:10px;top:8px;right:8px}.n3 .wheart.low{top:28px}
-.n4 .wheart{width:12px;height:12px;font-size:8px;top:6px;right:6px;box-shadow:0 0 0 1px #F59AB8}.n4 .wheart.low{top:21px}
-.side .wheart{width:26px;height:26px;font-size:15px;top:8px;right:8px}.side .wheart.low{top:40px}
+.wheart.low{top:12px}
+.n3 .wheart{width:16px;height:16px;font-size:10px;top:8px;right:8px}.n3 .wheart.low{top:8px}
+.n4 .wheart{width:12px;height:12px;font-size:8px;top:6px;right:6px;box-shadow:0 0 0 1px #F59AB8}.n4 .wheart.low{top:6px}
+.side .wheart{width:26px;height:26px;font-size:15px;top:8px;right:8px}.side .wheart.low{top:8px}
+.side .qty{bottom:8px;left:8px}
 .coord .mini-card .wheart,.pk-card .wheart{display:none}
 .memo.mine{background:#fff;border:1.5px dashed var(--pocket-edge)}
 .sign{display:none!important}
+.btn.bulklogo{width:100%;text-align:left;margin-bottom:12px}
+.btn.bulklogo small{display:block;color:var(--ink-soft);font-size:13px}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
 .pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
@@ -242,7 +245,7 @@ button{cursor:pointer}
 .r-PR{background:linear-gradient(135deg,#E8679A,#B774E8)}
 .r-R{background:#2F8FDB}
 .r-N{background:#A8939C}
-.qty{position:absolute;top:6px;right:6px;background:var(--badge-bg);color:var(--pink-deep);border:2px solid var(--pink);font-family:var(--display);font-size:14px;line-height:1;padding:4px 8px 3px;border-radius:10px;box-shadow:0 1px 3px rgba(150,60,90,.25)}
+.qty{position:absolute;bottom:34px;left:6px;background:var(--badge-bg);color:var(--pink-deep);border:2px solid var(--pink);font-family:var(--display);font-size:14px;line-height:1;padding:4px 8px 3px;border-radius:10px;box-shadow:0 1px 3px rgba(150,60,90,.25)}
 .card.holo.have{box-shadow:0 0 0 2px #fff,0 0 0 4px transparent}
 .pocket.er-have{background:conic-gradient(from 210deg,#FF8CC6,#FFD27A,#8FE3FF,#C9A2FF,#FF8CC6)}
 
@@ -391,6 +394,7 @@ textarea{resize:vertical}
 
 <input type="file" id="photoInput" accept="image/*" hidden>
 <input type="file" id="logoInput" accept="image/*" hidden>
+<input type="file" id="logoBulkInput" accept="image/*" multiple hidden>
 <input type="file" id="restoreInput" accept=".json,application/json" hidden>
 <input type="file" id="bulkInput" accept="image/*" multiple hidden>
 
@@ -578,7 +582,7 @@ async function syncFromFile(){
       if(keep){kc++;delete c.lf;return true} rc++;return false})}}
   // 사진 (개인용만, 휴대폰에 사진이 없는 칸만 채움)
   let pc=0;
-  if(!IS_SHARE&&D.photos&&typeof D.photos==="object"){for(const k in D.photos){const v=D.photos[k];if(typeof v==="string"&&v.startsWith("data:image/")&&!S.photos[k]){S.photos[k]=v;pc++}}}
+  if(!IS_SHARE&&D.photos&&typeof D.photos==="object"){for(const k in D.photos){const v=D.photos[k];if(typeof v==="string"&&v.startsWith("data:image/")&&!k.startsWith("logo-")&&!S.photos[k]){S.photos[k]=v;pc++}}}
   S.syncIds=[...ids]; S.syncStamp=stamp; S.syncVer=APP_VERSION; saveLocal(); saveLocalPhotos(); render();
   const parts=[nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:"",rc?`삭제 ${rc}장`:"",kc?`삭제됐지만 기록이 있어 남긴 카드 ${kc}장`:"",pc?`사진 ${pc}장`:""].filter(Boolean);
   if(parts.length)toast(`카드 목록 파일을 반영했어요: ${parts.join(", ")}`);
@@ -1072,6 +1076,7 @@ function renderBrands(){
   $("#brandBody").innerHTML=`<div class="grab"></div><h3>브랜드 관리</h3>
     <p class="muted" style="margin-bottom:12px">등록한 브랜드는 카드 정보에서 고를 수 있어요. 로고 칸을 누르면 로고 이미지를 넣을 수 있어요.</p>
     <form class="brand-add" id="brandAdd"><input id="bName" placeholder="새 브랜드 이름" autocomplete="off"><button class="btn primary">추가</button></form>
+    ${S.brands.length?`<button class="btn bulklogo" data-act="blogobulk">로고 한꺼번에 넣기<small>파일 이름을 브랜드 이름과 똑같이 맞추면 알아서 짝지어 넣어요 (예: 엔젤리 슈가.png)</small></button>`:""}
     <div class="blist">${S.brands.length?S.brands.map(b=>`<div class="brow" data-bid="${esc(b.id)}">
       <button class="blogo" data-act="blogo" aria-label="${esc(b.name)} 로고 ${logoOf(b.id)?"바꾸기":"넣기"}">${logoOf(b.id)?`<img src="${esc(logoOf(b.id))}" alt="">`:"로고<br>넣기"}</button>
       <div class="bmeta">${brandEdit===b.id?`<input class="bren" value="${esc(b.name)}" aria-label="브랜드 이름">`:`<strong>${esc(b.name)}</strong>`}<small>카드 ${cnt(b.id)}장</small></div>
@@ -1098,6 +1103,7 @@ $("#brandBody").addEventListener("click",async e=>{
     const cnt=$("#pkCount"); if(cnt)cnt.textContent=S.cards.filter(x=>x.brand===b.id).length; return}
   const a=e.target.closest("[data-act]"); if(!a)return; const act=a.dataset.act;
   if(act==="bclose"){dBrand.close();return}
+  if(act==="blogobulk"){$("#logoBulkInput").click();return}
   if(act==="pkdone"){brandPick=null;pkQuery="";renderBrands();return}
   if(act==="pkf"){pkFilter=a.dataset.f;renderBrands();return}
   const row=a.closest("[data-bid]"); const b=row&&brandById(row.dataset.bid); if(!b)return;
@@ -1116,21 +1122,40 @@ $("#brandBody").addEventListener("click",async e=>{
   }
 });
 $("#brandBody").addEventListener("keydown",e=>{if(e.target.classList.contains("bren")&&e.key==="Enter"){e.preventDefault();const s=$('#brandBody [data-act="bsave"]');s&&s.click()}});
+async function storeLogo(b,f){
+  const img=await loadImg(f);
+  let src=toCanvas(img,240,false,true).toDataURL("image/png");
+  if(src.length>150000)src=toCanvas(img,240).toDataURL("image/jpeg",.85);
+  const key="logo-"+b.id;
+  if(backend.kind==="db")await backend.db.doc("photos/"+key).set({src});
+  S.photos[key]=src; if(backend.kind!=="db"&&typeof saveLocalPhotos==="function")saveLocalPhotos();
+}
+$("#logoBulkInput").addEventListener("change",async e=>{
+  const files=[...e.target.files]; e.target.value=""; if(!files.length)return;
+  if(!S.brands.length){toast("먼저 브랜드를 추가해 주세요");return}
+  const key=x=>String(x||"").normalize("NFC").replace(/\.[^.]+$/,"").toLowerCase().replace(/[\s_\-·.]+/g,"");
+  const map={}; S.brands.forEach(b=>{map[key(b.name)]=b});
+  const pairs=[],miss=[];
+  files.forEach(f=>{let k=key(f.name);let b=map[k];if(!b){const k2=k.replace(/(로고|logo)$/,"");b=map[k2]}b?pairs.push([f,b]):miss.push(f.name)});
+  if(!pairs.length){toast("브랜드 이름과 같은 파일 이름이 없어요. 파일 이름을 브랜드 이름으로 바꿔 주세요");return}
+  let ok=0,fail=0;
+  for(let i=0;i<pairs.length;i++){const [f,b]=pairs[i];toast(`로고 넣는 중 ${i+1} / ${pairs.length}`);
+    try{await storeLogo(b,f);ok++}catch(err){fail++;if(err&&(err.code==="local_full"||err.code==="quota_exceeded")){toast(photoErr(err));break}}}
+  renderBrands(); render();
+  let msg=`로고 ${ok}개를 넣었어요`; if(fail)msg+=`, ${fail}개는 넣지 못했어요`;
+  if(miss.length)msg+=`. 짝을 못 찾은 파일: ${miss.slice(0,3).join(", ")}${miss.length>3?` 외 ${miss.length-3}개`:""}`;
+  toast(msg);
+});
 $("#logoInput").addEventListener("change",async e=>{
   const f=e.target.files[0]; e.target.value=""; const b=brandById(logoTarget); if(!f||!b)return;
-  try{const img=await loadImg(f);
-    let src=toCanvas(img,240,false,true).toDataURL("image/png");
-    if(src.length>150000)src=toCanvas(img,240).toDataURL("image/jpeg",.85);
-    const key="logo-"+b.id;
-    if(backend.kind==="db")await backend.db.doc("photos/"+key).set({src});
-    S.photos[key]=src; if(backend.kind!=="db"&&typeof saveLocalPhotos==="function")saveLocalPhotos();
+  try{await storeLogo(b,f);
     renderBrands(); render(); toast("로고를 넣었어요");
   }catch(err){toast(photoErr(err))}
 });
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.01-6";
+const APP_VERSION="2026.10.01-8";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
