@@ -204,6 +204,7 @@ button{cursor:pointer}
 .side .wheart{width:26px;height:26px;font-size:15px;top:8px;right:8px}.side .wheart.low{top:40px}
 .coord .mini-card .wheart,.pk-card .wheart{display:none}
 .memo.mine{background:#fff;border:1.5px dashed var(--pocket-edge)}
+.sign{display:none!important}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
 .pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
@@ -459,9 +460,9 @@ function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")
 function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||""}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -547,7 +548,7 @@ async function syncFromFile(){
   try{const r=await fetch("./binder.json?t="+Date.now(),{cache:"no-cache"});if(!r.ok)return;D=await r.json()}catch(e){return}
   if(!D||D.app!=="aikatsu-encore-binder"||!Array.isArray(D.cards)||!D.cards.length)return;
   const stamp=String(D.savedAt||"");
-  if(stamp&&stamp===S.syncStamp)return;
+  if(stamp&&stamp===S.syncStamp&&S.syncVer===APP_VERSION)return;
   const src=D.cards.filter(c=>c&&c.id&&c.name&&!String(c.name).startsWith("(예시)"));
   // 브랜드
   const bmap={}; const dBrands=Array.isArray(D.brands)?D.brands:[];
@@ -578,7 +579,7 @@ async function syncFromFile(){
   // 사진 (개인용만, 휴대폰에 사진이 없는 칸만 채움)
   let pc=0;
   if(!IS_SHARE&&D.photos&&typeof D.photos==="object"){for(const k in D.photos){const v=D.photos[k];if(typeof v==="string"&&v.startsWith("data:image/")&&!S.photos[k]){S.photos[k]=v;pc++}}}
-  S.syncIds=[...ids]; S.syncStamp=stamp; saveLocal(); saveLocalPhotos(); render();
+  S.syncIds=[...ids]; S.syncStamp=stamp; S.syncVer=APP_VERSION; saveLocal(); saveLocalPhotos(); render();
   const parts=[nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:"",rc?`삭제 ${rc}장`:"",kc?`삭제됐지만 기록이 있어 남긴 카드 ${kc}장`:"",pc?`사진 ${pc}장`:""].filter(Boolean);
   if(parts.length)toast(`카드 목록 파일을 반영했어요: ${parts.join(", ")}`);
 }
@@ -907,8 +908,8 @@ function saveForm(more){
   if(data.type==="none")delete data.type;
   if(data.brand==="none")delete data.brand;
   if(!data.coord)delete data.coord; if(!data.memo)delete data.memo;
-  if(editId){const c=byId(editId); const photo=c.photo, lf=c.lf, lm=c.lmSync, old=Object.assign({},c);
-    Object.keys(c).forEach(k=>{if(k!=="id")delete c[k]}); Object.assign(c,data); if(photo)c.photo=photo; if(lf)c.lf=lf; if(lm!==undefined)c.lmSync=lm;
+  if(editId){const c=byId(editId); const photo=c.photo, lf=c.lf, lm=c.lmSync, am=c.amemo, old=Object.assign({},c);
+    Object.keys(c).forEach(k=>{if(k!=="id")delete c[k]}); Object.assign(c,data); if(photo)c.photo=photo; if(lf)c.lf=lf; if(lm!==undefined)c.lmSync=lm; if(am)c.amemo=am;
     SYNC_F.forEach(k=>{if((old[k]||null)!==(c[k]||null))markLocal(c,k)});}
   else S.cards.push({id:uid(),...data});
   S.last={dan:data.dan,rarity:data.rarity,type:data.type||"none",source:data.source,part:data.part}; savePrefs();
@@ -1129,7 +1130,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.01-3";
+const APP_VERSION="2026.10.01-6";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
