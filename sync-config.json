@@ -1,8 +1,8 @@
 {
-  apiKey: "AIzaSyBJ1kORPryOEgzBEA2epmaH6X5gjBac9o0",
-  authDomain: "encore-binder.firebaseapp.com",
-  projectId: "encore-binder",
-  storageBucket: "encore-binder.firebasestorage.app",
-  messagingSenderId: "509986584062",
-  appId: "1:509986584062:web:355e0c8d41590e78823caf"
+  "apiKey": "AIzaSyBJ1kORPryOEgzBEA2epmaH6X5gjBac9o0",
+  "authDomain": "encore-binder.firebaseapp.com",
+  "projectId": "encore-binder",
+  "storageBucket": "encore-binder.firebasestorage.app",
+  "messagingSenderId": "509986584062",
+  "appId": "1:509986584062:web:355e0c8d41590e78823caf"
 }
