@@ -208,6 +208,13 @@ button{cursor:pointer}
 .sign{display:none!important}
 .btn.bulklogo{width:100%;text-align:left;margin-bottom:12px}
 .btn.bulklogo small{display:block;color:var(--ink-soft);font-size:13px}
+.cloudbtn{border-color:var(--pink-deep)!important}
+.cloudpill{display:inline-block;font-size:11px;background:var(--accent);color:#fff;border-radius:8px;padding:1px 7px;margin-left:4px;vertical-align:1px}
+.codebox{display:flex;align-items:center;gap:8px;background:var(--chip);border-radius:14px;padding:12px}
+.codebox .code{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:1px;font-weight:700;word-break:break-all;user-select:all}
+.cstatus{font-size:13px;color:var(--ink-soft);margin:8px 2px 0}
+.codein{display:flex;gap:8px}
+.codein input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-size:16px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
 .pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
@@ -461,12 +468,12 @@ function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")
   if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
   if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
   if(p.f)DIMS.concat(["sign","want"]).forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); S.f.sign=S.f.sign.filter(v=>v==="star"); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
-function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
 
 /* ---------- storage ---------- */
 function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -505,6 +512,7 @@ function saveLocalPhotos(){
   for(const k in cur)if(savedPhotos[k]!==cur[k])put.push(k);
   for(const k in savedPhotos)if(!(k in cur))del.push(k);
   if(!put.length&&!del.length)return;
+  if(typeof cloudSchedule==="function")cloudSchedule();
   photoChain=photoChain.then(()=>idbRun(st=>{put.forEach(k=>st.put(cur[k],k));del.forEach(k=>st.delete(k))}))
     .then(()=>{put.forEach(k=>savedPhotos[k]=cur[k]);del.forEach(k=>delete savedPhotos[k])})
     .catch(()=>toast("휴대폰 저장 공간이 부족해서 사진을 저장하지 못했어요"));
@@ -592,7 +600,7 @@ async function initBackend(){
   migrateMemos(); seedDefaults();
   try{S.photos=await idbAll();savedPhotos=Object.assign({},S.photos)}catch(e){S.photos={};toast("사진 저장소를 열지 못했어요. 브라우저 설정에서 사이트 데이터 저장을 허용해 주세요")}
   S.loading=false; render();
-  syncFromFile();
+  syncFromFile(); cloudStart();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 }
 
@@ -946,7 +954,28 @@ let moreView=null;
 function setTheme(c){S.theme=c;savePrefs();applyTheme(c);render();scheduleSave("set");openMore("theme");toast("테마 색을 바꿨어요")}
 function openMore(view){moreView=view||null;
   const body=$("#moreBody");
-  if(view==="restore"){
+  if(view==="cloud"){
+    const on=!!CLOUD.code;
+    body.innerHTML=`<div class="grab"></div><h3>백업 코드</h3>
+      ${on?`<p class="muted" style="margin:4px 0 12px">이 기기는 아래 백업 코드에 연결되어 있어요. 같은 코드를 입력한 기기끼리 수량, 하트, 메모, 사진, 로고, 테마 색이 자동으로 맞춰져요.</p>
+        <div class="codebox"><span class="code">${esc(fmtCode(CLOUD.code))}</span><button class="btn" data-act="ccopy">복사</button></div>
+        <p class="cstatus">${esc(cloudStatusText())}</p>
+        <div class="help">이 코드는 비밀번호와 같아요. 꼭 따로 메모해 두고, 다른 사람에게는 알려 주지 마세요. 코드를 잃어버리면 다른 기기에서 다시 불러올 수 없어요.</div>
+        <button class="btn danger" style="width:100%" data-act="cleave">이 기기 연결 끊기</button>`
+      :`<p class="muted" style="margin:4px 0 12px">백업 코드를 만들면 이 기기의 기록과 사진이 자동으로 저장되고, 다른 기기에 같은 코드를 입력하면 서로 자동으로 맞춰져요.</p>
+        <button class="btn primary" style="width:100%" data-act="cnew">새 백업 코드 만들기</button>
+        <p class="label" style="margin:16px 0 6px">이미 백업 코드가 있다면</p>
+        <div class="codein"><input id="codeIn" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" data-act="cjoin">연결하기</button></div>`}
+      <div class="row" style="margin-top:14px"><button class="btn" data-act="back">뒤로</button></div>`;
+  } else if(view==="cloudchoice"){
+    body.innerHTML=`<div class="grab"></div><h3>이 기기에 이미 기록이 있어요</h3>
+      <p class="muted" style="margin:6px 0 14px">백업 코드의 기록을 어떻게 가져올지 골라 주세요.</p>
+      <div class="menu">
+        <button class="btn" data-act="cmerge">둘 다 합치기<small>이 기기 기록과 코드 기록을 합쳐요. 수량은 더 큰 쪽을 남겨요</small></button>
+        <button class="btn" data-act="creplace">코드 기록으로 바꾸기<small>이 기기 기록을 지우고 코드에 저장된 기록으로 바꿔요</small></button>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn" data-act="cloud">취소</button></div>`;
+  } else if(view==="restore"){
     const b=pendingRestore;
     body.innerHTML=`<div class="grab"></div><h3>백업 파일 불러오기</h3>
       <p class="muted" style="margin:6px 0 14px">이 백업에는 카드 ${b.cards.length}장, 브랜드 ${b.brands.length}개, 사진 ${Object.keys(b.photos||{}).length}장이 들어 있어요${b.savedAt?` (${esc(new Date(b.savedAt).toLocaleString("ko-KR"))} 저장)`:""}. 불러오면 지금 바인더의 내용이 모두 이 백업 내용으로 바뀌어요.</p>
@@ -985,6 +1014,7 @@ function openMore(view){moreView=view||null;
       <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 패러렐 카드는 번호 뒤에 ★, 뒷면은 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
       <button class="btn" data-act="import">목록 붙여넣기<small>스프레드시트에 정리한 카드를 한 번에 추가해요</small></button>
       <button class="btn" data-act="export">목록 복사하기<small>수량까지 포함해 표 형태로 백업해요</small></button>
+      <button class="btn cloudbtn" data-act="cloud">백업 코드${CLOUD.code?` <span class="cloudpill">연결됨</span>`:""}<small>코드 하나로 여러 기기의 기록과 사진을 자동으로 맞춰요</small></button>
       <button class="btn" data-act="backup">백업 파일 저장하기<small>카드, 수량, 메모, 브랜드, 테마 색${S.bkPhotos?", 사진":""}을 파일 하나로 저장해요</small></button>
       <label class="bk-switch"><input type="checkbox" id="bkPhotos" ${S.bkPhotos?"checked":""}><span class="sw-track"></span>백업에 사진도 함께 저장</label>
       <button class="btn" data-act="restore">백업 파일 불러오기<small>저장해 둔 백업 파일로 바인더를 되돌려요</small></button>
@@ -1004,6 +1034,13 @@ $("#moreBody").addEventListener("click",async e=>{
   if(act==="bulk")$("#bulkInput").click();
   if(act==="brands"){dMore.close();openBrands()}
   if(act==="backup")saveBackup();
+  if(act==="cloud"){openMore("cloud");return}
+  if(act==="cnew"){cloudCreate();return}
+  if(act==="cjoin"){cloudJoin($("#codeIn").value);return}
+  if(act==="creplace"){cloudJoin(pendingCode,"replace");return}
+  if(act==="cmerge"){cloudJoin(pendingCode,"merge");return}
+  if(act==="ccopy"){const t=fmtCode(CLOUD.code);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("백업 코드를 복사했어요")).catch(()=>toast("복사가 막혀 있어요. 코드를 길게 눌러 복사해 주세요"));return}
+  if(act==="cleave"){if(a.dataset.arm!=="1"){a.dataset.arm="1";a.textContent="한 번 더 누르면 연결을 끊어요";return}cloudLeave();return}
   if(act==="hardreload")hardReload();
   if(act==="restore")$("#restoreInput").click();
   if(act==="doRestore")doRestore();
@@ -1155,7 +1192,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.01-8";
+const APP_VERSION="2026.10.02-1";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1163,6 +1200,129 @@ async function hardReload(){
   setTimeout(()=>location.replace(location.pathname+"?v="+Date.now()),300);
 }
 document.addEventListener("change",e=>{if(e.target&&e.target.id==="bkPhotos"){S.bkPhotos=e.target.checked;savePrefs();if(dMore.open&&!moreView)openMore()}});
+/* ---------- 백업 코드 (Firebase 동기화) ---------- */
+const CLOUD={cfg:null,ready:false,db:null,ref:null,code:"",status:"off",last:0,unsub:null,timer:null,busy:false,again:false,err:""};
+const CK="binder-cloud";
+const CODE_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function fmtCode(c){return String(c||"").replace(/(.{4})(?=.)/g,"$1-")}
+function cleanCode(c){return String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+function newCode(){const a=new Uint32Array(20);crypto.getRandomValues(a);return [...a].map(x=>CODE_ABC[x%CODE_ABC.length]).join("")}
+function canon(v){if(v===undefined)return "";if(v===null||typeof v!=="object")return JSON.stringify(v);if(Array.isArray(v))return "["+v.map(canon).join(",")+"]";return "{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}"}
+function pver(s){s=String(s||"");let h=0;for(let i=0;i<s.length;i+=53)h=(h*31+s.charCodeAt(i))|0;return s.length+"."+(h>>>0).toString(36)}
+function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0}}catch(e){}}
+function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last}))}catch(e){}}
+function localState(){
+  const st={cards:{},qty:{},want:{},brands:{},theme:S.theme||"",photos:{}};
+  S.cards.forEach(c=>{if(c&&c.id){const o=Object.assign({},c);delete o.photo;st.cards[c.id]=canon(o)}});
+  const q=cleanQty();for(const k in q)st.qty[k]=canon(q[k]);
+  const w=cleanWant();for(const k in w)st.want[k]=canon(true);
+  S.brands.forEach(b=>{if(b&&b.id)st.brands[b.id]=canon(b)});
+  for(const k in S.photos){const v=S.photos[k];if(typeof v==="string"&&v.startsWith("data:image/"))st.photos[k]=pver(v)}
+  return st;
+}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+async function cloudInit(){
+  if(CLOUD.ready)return true;
+  if(!CLOUD.cfg){try{const r=await fetch("./sync-config.json?t="+Date.now(),{cache:"no-cache"});if(r.ok){const c=await r.json();if(c&&c.apiKey&&c.projectId&&!/여기|YOUR/i.test(c.apiKey+c.projectId))CLOUD.cfg=c}}catch(e){}}
+  if(!CLOUD.cfg)return false;
+  try{
+    if(!window.firebase){await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js")}
+    if(!firebase.apps.length)firebase.initializeApp(CLOUD.cfg);
+    CLOUD.db=firebase.firestore(); CLOUD.ready=true; return true;
+  }catch(e){CLOUD.err="동기화 서버에 연결하지 못했어요";return false}
+}
+async function cloudStart(){
+  cloudLoad(); if(!CLOUD.code){CLOUD.status="off";return}
+  CLOUD.status="connecting"; if(!(await cloudInit())){CLOUD.status=navigator.onLine?"error":"offline";return}
+  cloudListen();
+}
+function cloudListen(){
+  if(CLOUD.unsub)CLOUD.unsub();
+  CLOUD.ref=CLOUD.db.collection("binders").doc(CLOUD.code);
+  CLOUD.unsub=CLOUD.ref.onSnapshot(snap=>{
+    if(!snap.exists){CLOUD.status="missing";refreshCloudView();return}
+    CLOUD.status="on"; cloudApplyRemote(snap.data()).then(()=>{cloudSchedule(300);refreshCloudView()});
+  },err=>{CLOUD.status=navigator.onLine?"error":"offline";refreshCloudView()});
+}
+let cloudApplying=false;
+async function cloudApplyRemote(R){
+  if(!CLOUD.shadow)CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:"",photos:{}};
+  const Sh=CLOUD.shadow, L=localState(); let changed=false, themeCh=false; const getPhotos=[];
+  const sec=(name,remote,apply)=>{remote=remote||{};const keys=new Set([...Object.keys(remote),...Object.keys(Sh[name]||{})]);Sh[name]=Sh[name]||{};
+    keys.forEach(k=>{const r=remote[k]===undefined?"":(name==="photos"?String(remote[k]):canon(remote[k]));const sh=Sh[name][k]||"";
+      if(r===sh)return; const l=L[name][k]||"";
+      if(l===sh||l===r){apply(k,remote[k]);changed=true}
+      if(r)Sh[name][k]=r;else delete Sh[name][k];});};
+  cloudApplying=true;
+  sec("cards",R.cards,(k,v)=>{const i=S.cards.findIndex(c=>c.id===k);if(v===undefined){if(i>=0)S.cards.splice(i,1)}else{const o=JSON.parse(JSON.stringify(v));o.id=k;if(i>=0)S.cards[i]=o;else S.cards.push(o)}});
+  sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
+  sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
+  sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
+  sec("photos",R.photoIdx,(k,v)=>{if(v===undefined)delete S.photos[k];else getPhotos.push(k)});
+  const rt=R.theme?canon(R.theme):"";
+  if(rt&&rt!==(Sh.theme||"")){if((canon(S.theme||"")===(Sh.theme||""))||canon(S.theme)===rt){S.theme=R.theme;themeCh=true;changed=true}Sh.theme=rt}
+  for(const k of getPhotos){try{const d=await CLOUD.ref.collection("photos").doc(k).get();if(d.exists&&d.data().src)S.photos[k]=d.data().src}catch(e){}}
+  if(changed){saveLocal();saveLocalPhotos();if(themeCh){savePrefs();applyTheme(S.theme)}render();if(dDetail.open&&openId)openDetail(openId)}
+  cloudApplying=false; CLOUD.last=Date.now(); cloudSave();
+}
+function cloudSchedule(ms){if(!CLOUD.code||CLOUD.status!=="on"||cloudApplying)return;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,ms==null?1200:ms)}
+async function cloudPush(){
+  if(!CLOUD.ref||CLOUD.status!=="on")return; if(CLOUD.busy){CLOUD.again=true;return} CLOUD.busy=true;
+  try{
+    const Sh=CLOUD.shadow, L=localState(), FP=firebase.firestore.FieldPath, DEL=firebase.firestore.FieldValue.delete();
+    const args=[], after=[];
+    ["cards","qty","want","brands"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
+      keys.forEach(k=>{const l=L[name][k]||"",sh=(Sh[name]||{})[k]||"";if(l===sh)return;
+        args.push(new FP(name,k),l?JSON.parse(l):DEL);after.push([name,k,l])})});
+    if((L.theme?canon(L.theme):"")!==(Sh.theme||"")&&L.theme){args.push(new FP("theme"),L.theme);after.push(["theme",null,canon(L.theme)])}
+    const pk=new Set([...Object.keys(L.photos),...Object.keys(Sh.photos||{})]); const pch=[...pk].filter(k=>(L.photos[k]||"")!==((Sh.photos||{})[k]||""));
+    let n=0; for(const k of pch){n++; if(pch.length>3)toast(`백업 코드에 사진 올리는 중 ${n} / ${pch.length}`);
+      const pr=CLOUD.ref.collection("photos").doc(k);
+      if(L.photos[k]){await pr.set({src:S.photos[k]});args.push(new FP("photoIdx",k),L.photos[k])}else{await pr.delete().catch(()=>{});args.push(new FP("photoIdx",k),DEL)}
+      after.push(["photos",k,L.photos[k]||""]);}
+    if(args.length){args.push(new FP("updatedAt"),Date.now());await CLOUD.ref.update(...args);
+      after.forEach(([name,k,v])=>{if(name==="theme"){Sh.theme=v;return}Sh[name]=Sh[name]||{};if(v)Sh[name][k]=v;else delete Sh[name][k]});
+      CLOUD.last=Date.now(); cloudSave(); refreshCloudView();}
+  }catch(e){CLOUD.err=(e&&e.code==="resource-exhausted")?"오늘 동기화 사용량이 가득 찼어요. 내일 다시 이어서 올라가요":"백업 코드에 저장하지 못했어요. 인터넷 연결을 확인해 주세요";toast(CLOUD.err)}
+  CLOUD.busy=false; if(CLOUD.again){CLOUD.again=false;cloudSchedule(500)}
+}
+function hasLocalRecords(){return Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
+async function cloudCreate(){
+  if(!(await cloudInit())){toast(CLOUD.err||"백업 코드 기능이 아직 준비되지 않았어요");return}
+  const code=newCode(); const ref=CLOUD.db.collection("binders").doc(code);
+  try{
+    toast("백업 코드를 만드는 중이에요");
+    await ref.set({v:1,createdAt:Date.now(),updatedAt:Date.now(),cards:{},qty:{},want:{},brands:{},photoIdx:{},theme:S.theme||""});
+    CLOUD.code=code; CLOUD.ref=ref; CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}; CLOUD.status="on"; cloudSave();
+    await cloudPush(); cloudListen(); openMore("cloud"); toast("백업 코드를 만들었어요. 코드를 꼭 메모해 두세요");
+  }catch(e){toast("백업 코드를 만들지 못했어요. 인터넷 연결을 확인해 주세요")}
+}
+let pendingCode=null;
+async function cloudJoin(raw,mode){
+  const code=cleanCode(raw); if(code.length!==20){toast("백업 코드는 20자리예요. 다시 확인해 주세요");return}
+  if(!(await cloudInit())){toast(CLOUD.err||"백업 코드 기능이 아직 준비되지 않았어요");return}
+  const ref=CLOUD.db.collection("binders").doc(code); let snap;
+  try{snap=await ref.get()}catch(e){toast("백업 코드를 확인하지 못했어요. 인터넷 연결을 확인해 주세요");return}
+  if(!snap.exists){toast("이 백업 코드를 찾을 수 없어요. 코드를 다시 확인해 주세요");return}
+  if(!mode&&hasLocalRecords()){pendingCode=code;openMore("cloudchoice");return}
+  CLOUD.code=code; CLOUD.ref=ref; CLOUD.status="on";
+  if(mode==="merge"){CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}}
+  else{ // 코드 기록으로 바꾸기
+    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};
+    CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}};
+  }
+  toast("백업 코드 기록을 불러오는 중이에요");
+  const R0=snap.data(); await cloudApplyRemote(R0);
+  if(mode==="merge"){let ch=false;for(const k in (R0.qty||{}))if((R0.qty[k]||0)>(S.qty[k]||0)){S.qty[k]=R0.qty[k];ch=true}for(const k in (R0.want||{}))if(R0.want[k]&&!S.want[k]){S.want[k]=true;ch=true}if(ch){saveLocal();render()}} cloudSave(); cloudListen(); cloudSchedule(300);
+  pendingCode=null; openMore("cloud"); toast("백업 코드에 연결했어요");
+}
+function cloudLeave(){if(CLOUD.unsub)CLOUD.unsub();CLOUD.unsub=null;CLOUD.code="";CLOUD.shadow=null;CLOUD.status="off";try{localStorage.removeItem(CK)}catch(e){}openMore("cloud");toast("이 기기의 백업 코드 연결을 끊었어요. 기록은 그대로 남아 있어요")}
+function cloudStatusText(){const t=CLOUD.last?new Date(CLOUD.last).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+  return {on:`연결됨${t?" · 마지막 동기화 "+t:""}`,connecting:"연결하는 중…",offline:"인터넷이 연결되면 다시 동기화해요",error:"동기화 서버에 연결하지 못했어요",missing:"이 백업 코드가 서버에서 사라졌어요",off:"연결 안 됨"}[CLOUD.status]||""}
+function refreshCloudView(){if(dMore.open&&moreView==="cloud")openMore("cloud")}
+window.addEventListener("online",()=>{if(CLOUD.code&&CLOUD.status!=="on")cloudStart()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)cloudSchedule(300)});
+
 /* ---------- backup ---------- */
 let pendingRestore=null;
 async function saveBackup(){
