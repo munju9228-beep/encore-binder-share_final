@@ -966,6 +966,8 @@ function openMore(view){moreView=view||null;
         <button class="btn primary" style="width:100%" data-act="cnew">새 백업 코드 만들기</button>
         <p class="label" style="margin:16px 0 6px">이미 백업 코드가 있다면</p>
         <div class="codein"><input id="codeIn" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" data-act="cjoin">연결하기</button></div>`}
+      ${CLOUD.err?`<div class="help" style="border:1.5px solid #E0457B">${esc(CLOUD.err)}</div>`:""}
+      <p class="muted" style="font-size:12px;margin-top:10px">연결 정보: ${CLOUD.cfg?esc("프로젝트 "+CLOUD.cfg.projectId+" · 키 끝자리 "+String(CLOUD.cfg.apiKey).slice(-4)):"설정 파일 확인 전"}</p>
       <div class="row" style="margin-top:14px"><button class="btn" data-act="back">뒤로</button></div>`;
   } else if(view==="cloudchoice"){
     body.innerHTML=`<div class="grab"></div><h3>이 기기에 이미 기록이 있어요</h3>
@@ -1034,7 +1036,7 @@ $("#moreBody").addEventListener("click",async e=>{
   if(act==="bulk")$("#bulkInput").click();
   if(act==="brands"){dMore.close();openBrands()}
   if(act==="backup")saveBackup();
-  if(act==="cloud"){openMore("cloud");return}
+  if(act==="cloud"){openMore("cloud");if(!CLOUD.cfg)cloudInit().then(refreshCloudView);return}
   if(act==="cnew"){cloudCreate();return}
   if(act==="cjoin"){cloudJoin($("#codeIn").value);return}
   if(act==="creplace"){cloudJoin(pendingCode,"replace");return}
@@ -1192,7 +1194,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.02-1";
+const APP_VERSION="2026.10.02-3";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1223,13 +1225,17 @@ function localState(){
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
 async function cloudInit(){
   if(CLOUD.ready)return true;
-  if(!CLOUD.cfg){try{const r=await fetch("./sync-config.json?t="+Date.now(),{cache:"no-cache"});if(r.ok){const c=await r.json();if(c&&c.apiKey&&c.projectId&&!/여기|YOUR/i.test(c.apiKey+c.projectId))CLOUD.cfg=c}}catch(e){}}
-  if(!CLOUD.cfg)return false;
+  if(!CLOUD.cfg){try{const r=await fetch("./sync-config.json?t="+Date.now(),{cache:"no-cache"});
+    if(r.ok){const txt=await r.text();let c=null;try{c=JSON.parse(txt)}catch(e){c={};
+      ["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId"].forEach(k=>{const m=txt.match(new RegExp(k+"[\"']?\\s*:\\s*[\"']([^\"']+)[\"']"));if(m)c[k]=m[1].trim()})}
+      if(c&&c.apiKey&&c.projectId&&!/여기|YOUR|화면의/i.test(c.apiKey+c.projectId))CLOUD.cfg={apiKey:c.apiKey,authDomain:c.authDomain||(c.projectId+".firebaseapp.com"),projectId:c.projectId,appId:c.appId,storageBucket:c.storageBucket,messagingSenderId:c.messagingSenderId}}
+    else CLOUD.cfgMissing=true}catch(e){}}
+  if(!CLOUD.cfg){CLOUD.err=CLOUD.cfgMissing?"sync-config.json 파일을 찾지 못했어요. 저장소 맨 위(index.html과 같은 곳)에 정확히 그 이름으로 있는지 확인해 주세요":"sync-config.json 안에서 apiKey나 projectId를 읽지 못했어요. 파일 내용을 확인해 주세요";return false}
   try{
     if(!window.firebase){await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js")}
     if(!firebase.apps.length)firebase.initializeApp(CLOUD.cfg);
     CLOUD.db=firebase.firestore(); CLOUD.ready=true; return true;
-  }catch(e){CLOUD.err="동기화 서버에 연결하지 못했어요";return false}
+  }catch(e){CLOUD.err="동기화 프로그램을 불러오지 못했어요. 인터넷 연결을 확인해 주세요";return false}
 }
 async function cloudStart(){
   cloudLoad(); if(!CLOUD.code){CLOUD.status="off";return}
@@ -1283,26 +1289,36 @@ async function cloudPush(){
     if(args.length){args.push(new FP("updatedAt"),Date.now());await CLOUD.ref.update(...args);
       after.forEach(([name,k,v])=>{if(name==="theme"){Sh.theme=v;return}Sh[name]=Sh[name]||{};if(v)Sh[name][k]=v;else delete Sh[name][k]});
       CLOUD.last=Date.now(); cloudSave(); refreshCloudView();}
-  }catch(e){CLOUD.err=(e&&e.code==="resource-exhausted")?"오늘 동기화 사용량이 가득 찼어요. 내일 다시 이어서 올라가요":"백업 코드에 저장하지 못했어요. 인터넷 연결을 확인해 주세요";toast(CLOUD.err)}
+  }catch(e){console.error(e);CLOUD.err=cloudErrText(e);toast(CLOUD.err);refreshCloudView()}
   CLOUD.busy=false; if(CLOUD.again){CLOUD.again=false;cloudSchedule(500)}
 }
 function hasLocalRecords(){return Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
+function withTimeout(pr,ms){return Promise.race([pr,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))])}
+function cloudErrText(e){const c=(e&&e.code)||"";const m=String((e&&e.message)||"");
+  if(/api.?key|API_KEY|invalid-api-key/i.test(m)||c==="invalid-api-key")return "설정 파일(sync-config.json)의 apiKey가 맞지 않아요. Firebase 화면에서 apiKey를 다시 복사해 넣어 주세요";
+  if(c==="permission-denied")return "Firestore 보안 규칙이 막고 있어요. 규칙을 붙여넣고 '게시'를 눌렀는지 확인해 주세요";
+  if(c==="not-found")return "Firestore 데이터베이스를 찾지 못했어요. projectId가 데이터베이스를 만든 프로젝트와 같은지 확인해 주세요";
+  if(c==="timeout")return "동기화 서버가 응답하지 않아요. 인터넷 연결과 sync-config.json의 apiKey, projectId를 확인해 주세요";
+  if(c==="unavailable")return "인터넷 연결이 불안정해서 서버에 닿지 못했어요. 잠시 후 다시 시도해 주세요";
+  if(c==="resource-exhausted")return "오늘 동기화 사용량이 가득 찼어요. 내일 다시 시도해 주세요";
+  return "백업 코드 서버 오류"+(c?` (${c})`:"")+". 화면을 캡처해서 알려 주세요";}
 async function cloudCreate(){
-  if(!(await cloudInit())){toast(CLOUD.err||"백업 코드 기능이 아직 준비되지 않았어요");return}
+  if(!(await cloudInit())){toast(CLOUD.err||"백업 코드 기능이 아직 준비되지 않았어요");refreshCloudView();return}
   const code=newCode(); const ref=CLOUD.db.collection("binders").doc(code);
   try{
     toast("백업 코드를 만드는 중이에요");
-    await ref.set({v:1,createdAt:Date.now(),updatedAt:Date.now(),cards:{},qty:{},want:{},brands:{},photoIdx:{},theme:S.theme||""});
-    CLOUD.code=code; CLOUD.ref=ref; CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}; CLOUD.status="on"; cloudSave();
-    await cloudPush(); cloudListen(); openMore("cloud"); toast("백업 코드를 만들었어요. 코드를 꼭 메모해 두세요");
-  }catch(e){toast("백업 코드를 만들지 못했어요. 인터넷 연결을 확인해 주세요")}
+    await withTimeout(ref.set({v:1,createdAt:Date.now(),updatedAt:Date.now(),cards:{},qty:{},want:{},brands:{},photoIdx:{},theme:S.theme||""}),20000);
+    CLOUD.code=code; CLOUD.ref=ref; CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}; CLOUD.status="on"; CLOUD.err=""; cloudSave();
+    openMore("cloud"); toast("백업 코드를 만들었어요. 코드를 꼭 메모해 두세요");
+    cloudListen(); setTimeout(()=>cloudSchedule(0),400);
+  }catch(e){console.error(e);CLOUD.err=cloudErrText(e);toast(CLOUD.err);refreshCloudView()}
 }
 let pendingCode=null;
 async function cloudJoin(raw,mode){
   const code=cleanCode(raw); if(code.length!==20){toast("백업 코드는 20자리예요. 다시 확인해 주세요");return}
   if(!(await cloudInit())){toast(CLOUD.err||"백업 코드 기능이 아직 준비되지 않았어요");return}
   const ref=CLOUD.db.collection("binders").doc(code); let snap;
-  try{snap=await ref.get()}catch(e){toast("백업 코드를 확인하지 못했어요. 인터넷 연결을 확인해 주세요");return}
+  try{snap=await withTimeout(ref.get(),20000)}catch(e){console.error(e);CLOUD.err=cloudErrText(e);toast(CLOUD.err);refreshCloudView();return}
   if(!snap.exists){toast("이 백업 코드를 찾을 수 없어요. 코드를 다시 확인해 주세요");return}
   if(!mode&&hasLocalRecords()){pendingCode=code;openMore("cloudchoice");return}
   CLOUD.code=code; CLOUD.ref=ref; CLOUD.status="on";
