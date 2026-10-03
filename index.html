@@ -1194,7 +1194,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.02-3";
+const APP_VERSION="2026.10.02-4";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1211,8 +1211,8 @@ function cleanCode(c){return String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,""
 function newCode(){const a=new Uint32Array(20);crypto.getRandomValues(a);return [...a].map(x=>CODE_ABC[x%CODE_ABC.length]).join("")}
 function canon(v){if(v===undefined)return "";if(v===null||typeof v!=="object")return JSON.stringify(v);if(Array.isArray(v))return "["+v.map(canon).join(",")+"]";return "{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}"}
 function pver(s){s=String(s||"");let h=0;for(let i=0;i<s.length;i+=53)h=(h*31+s.charCodeAt(i))|0;return s.length+"."+(h>>>0).toString(36)}
-function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0}}catch(e){}}
-function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last}))}catch(e){}}
+function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0;CLOUD.repairVer=d.repairVer||""}}catch(e){}}
+function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last,repairVer:CLOUD.repairVer||""}))}catch(e){}}
 function localState(){
   const st={cards:{},qty:{},want:{},brands:{},theme:S.theme||"",photos:{}};
   S.cards.forEach(c=>{if(c&&c.id){const o=Object.assign({},c);delete o.photo;st.cards[c.id]=canon(o)}});
@@ -1250,28 +1250,52 @@ function cloudListen(){
     CLOUD.status="on"; cloudApplyRemote(snap.data()).then(()=>{cloudSchedule(300);refreshCloudView()});
   },err=>{CLOUD.status=navigator.onLine?"error":"offline";refreshCloudView()});
 }
-let cloudApplying=false;
+let cloudApplying=0; const cloudDL=new Set();
 async function cloudApplyRemote(R){
   if(!CLOUD.shadow)CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:"",photos:{}};
   const Sh=CLOUD.shadow, L=localState(); let changed=false, themeCh=false; const getPhotos=[];
   const sec=(name,remote,apply)=>{remote=remote||{};const keys=new Set([...Object.keys(remote),...Object.keys(Sh[name]||{})]);Sh[name]=Sh[name]||{};
     keys.forEach(k=>{const r=remote[k]===undefined?"":(name==="photos"?String(remote[k]):canon(remote[k]));const sh=Sh[name][k]||"";
       if(r===sh)return; const l=L[name][k]||"";
+      if(name==="photos"){
+        if(l===r){Sh.photos[k]=r;return}                 // 이미 같은 사진
+        if(l===sh){ if(r){getPhotos.push([k,r]);return}  // 받은 뒤에 기록
+                    delete S.photos[k];changed=true;delete Sh.photos[k];return}
+        if(r)Sh.photos[k]=r;else delete Sh.photos[k];return;   // 이 기기에서도 바꿈 → 이 기기 것을 올림
+      }
       if(l===sh||l===r){apply(k,remote[k]);changed=true}
       if(r)Sh[name][k]=r;else delete Sh[name][k];});};
-  cloudApplying=true;
-  sec("cards",R.cards,(k,v)=>{const i=S.cards.findIndex(c=>c.id===k);if(v===undefined){if(i>=0)S.cards.splice(i,1)}else{const o=JSON.parse(JSON.stringify(v));o.id=k;if(i>=0)S.cards[i]=o;else S.cards.push(o)}});
-  sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
-  sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
-  sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
-  sec("photos",R.photoIdx,(k,v)=>{if(v===undefined)delete S.photos[k];else getPhotos.push(k)});
-  const rt=R.theme?canon(R.theme):"";
-  if(rt&&rt!==(Sh.theme||"")){if((canon(S.theme||"")===(Sh.theme||""))||canon(S.theme)===rt){S.theme=R.theme;themeCh=true;changed=true}Sh.theme=rt}
-  for(const k of getPhotos){try{const d=await CLOUD.ref.collection("photos").doc(k).get();if(d.exists&&d.data().src)S.photos[k]=d.data().src}catch(e){}}
-  if(changed){saveLocal();saveLocalPhotos();if(themeCh){savePrefs();applyTheme(S.theme)}render();if(dDetail.open&&openId)openDetail(openId)}
-  cloudApplying=false; CLOUD.last=Date.now(); cloudSave();
+  cloudApplying++;
+  try{
+    sec("cards",R.cards,(k,v)=>{const i=S.cards.findIndex(c=>c.id===k);if(v===undefined){if(i>=0)S.cards.splice(i,1)}else{const o=JSON.parse(JSON.stringify(v));o.id=k;if(i>=0)S.cards[i]=o;else S.cards.push(o)}});
+    sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
+    sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
+    sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
+    sec("photos",R.photoIdx,()=>{});
+    // 예전 버전에서 받다 만 사진 다시 받기 (업데이트 후 한 번)
+    if(CLOUD.repairVer!==APP_VERSION&&R.photoIdx){for(const k in R.photoIdx){const r=String(R.photoIdx[k]);if(!S.photos[k]&&Sh.photos[k]===r&&!getPhotos.some(x=>x[0]===k)){delete Sh.photos[k];getPhotos.push([k,r])}}CLOUD.repairVer=APP_VERSION}
+    const rt=R.theme?canon(R.theme):"";
+    if(rt&&rt!==(Sh.theme||"")){if((canon(S.theme||"")===(Sh.theme||""))||canon(S.theme)===rt){S.theme=R.theme;themeCh=true;changed=true}Sh.theme=rt}
+    if(changed){saveLocal();saveLocalPhotos();if(themeCh){savePrefs();applyTheme(S.theme)}render();if(dDetail.open&&openId)openDetail(openId)}
+    cloudSave();
+    // 사진 내려받기 (4장씩 동시에, 진행 상황 표시)
+    const todo=getPhotos.filter(([k])=>!cloudDL.has(k)); todo.forEach(([k])=>cloudDL.add(k));
+    if(todo.length){
+      let done=0, ok=0, idx=0; const total=todo.length;
+      const show=()=>{if(total>1)toast(`사진 받는 중 ${done} / ${total}`)}; show();
+      const worker=async()=>{while(idx<todo.length){const [k,ver]=todo[idx++];
+        try{const d=await withTimeout(CLOUD.ref.collection("photos").doc(k).get(),30000);
+          if(d.exists&&d.data().src){S.photos[k]=d.data().src;Sh.photos[k]=ver;ok++}}catch(e){}
+        cloudDL.delete(k); done++; show();
+        if(done%8===0||done===total){saveLocalPhotos();cloudSave();render();if(dDetail.open&&openId)openDetail(openId)}}};
+      await Promise.all([worker(),worker(),worker(),worker()]);
+      if(total>1)toast(ok===total?`사진 ${ok}장을 모두 받았어요`:`사진 ${ok}장을 받았어요. 나머지 ${total-ok}장은 다음에 다시 받을게요`);
+    }
+  }finally{cloudApplying--}
+  CLOUD.last=Date.now(); cloudSave(); refreshCloudView();
 }
-function cloudSchedule(ms){if(!CLOUD.code||CLOUD.status!=="on"||cloudApplying)return;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,ms==null?1200:ms)}
+
+function cloudSchedule(ms){if(!CLOUD.code||CLOUD.status!=="on")return;if(cloudApplying){clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(()=>cloudSchedule(ms),800);return}clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,ms==null?1200:ms)}
 async function cloudPush(){
   if(!CLOUD.ref||CLOUD.status!=="on")return; if(CLOUD.busy){CLOUD.again=true;return} CLOUD.busy=true;
   try{
@@ -1335,7 +1359,7 @@ async function cloudJoin(raw,mode){
 function cloudLeave(){if(CLOUD.unsub)CLOUD.unsub();CLOUD.unsub=null;CLOUD.code="";CLOUD.shadow=null;CLOUD.status="off";try{localStorage.removeItem(CK)}catch(e){}openMore("cloud");toast("이 기기의 백업 코드 연결을 끊었어요. 기록은 그대로 남아 있어요")}
 function cloudStatusText(){const t=CLOUD.last?new Date(CLOUD.last).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
   return {on:`연결됨${t?" · 마지막 동기화 "+t:""}`,connecting:"연결하는 중…",offline:"인터넷이 연결되면 다시 동기화해요",error:"동기화 서버에 연결하지 못했어요",missing:"이 백업 코드가 서버에서 사라졌어요",off:"연결 안 됨"}[CLOUD.status]||""}
-function refreshCloudView(){if(dMore.open&&moreView==="cloud")openMore("cloud")}
+function refreshCloudView(){if(!(dMore.open&&moreView==="cloud"))return;const ci=$("#codeIn"),v=ci?ci.value:"",f=ci&&document.activeElement===ci;openMore("cloud");const n=$("#codeIn");if(n&&v){n.value=v;if(f)n.focus()}}
 window.addEventListener("online",()=>{if(CLOUD.code&&CLOUD.status!=="on")cloudStart()});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)cloudSchedule(300)});
 
