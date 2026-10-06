@@ -217,7 +217,7 @@ button{cursor:pointer}
 .cstatus{font-size:13px;color:var(--ink-soft);margin:8px 2px 0}
 .codein{display:flex;gap:8px}
 .codein input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-size:16px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
-.toptabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.toptabs{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:6px;margin-bottom:8px}
 .toptabs button{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:9px 6px;font-size:15px;color:var(--ink-soft)}
 .toptabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 #infoView{display:none;padding:4px 16px 0}
@@ -236,6 +236,41 @@ button{cursor:pointer}
 .info-acts button{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:5px 10px;font-size:13px}
 .info-acts button:disabled{opacity:.35}
 .btn.danger.arm{background:#C0265E;color:#fff;border-color:#C0265E}
+#outfitView{display:none;padding:4px 16px 0}
+.coord-mode #outfitView{display:block}
+.coord-mode .bctl,.coord-mode #binder{display:none!important}
+.otool{display:flex;gap:8px;align-items:center;margin:6px 0 8px}
+.otool .btn.primary{flex:1}
+.seg.oseg{grid-template-columns:repeat(2,auto);padding:3px}
+.seg.oseg button{padding:6px 12px;font-family:var(--display);font-size:15px}
+.ofilter{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.outfit{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+.ohead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.oname{flex:1;min-width:0;text-align:left;border:0;background:none;padding:0;font-family:var(--display);font-size:19px;color:var(--ink);line-height:1.25}
+.oname small{display:block;font-family:var(--body);font-size:12px;color:var(--ink-soft)}
+.ohead .heart{margin-left:0;width:36px;height:36px;font-size:19px}
+.ogrid{display:grid;gap:8px}
+.ogrid.g4{grid-template-columns:repeat(4,1fr);gap:6px}
+.ogrid.g2{grid-template-columns:repeat(2,1fr);gap:10px}
+.oslot{border:0;background:none;padding:0;text-align:center;display:block;width:100%}
+.olabel{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px}
+.oslot .wheart{display:none}
+.g4 .cap{display:none}
+.g4 .rar{font-size:9px;padding:2px 3px 1px;top:3px;left:3px;border-radius:4px}
+.g4 .qty{font-size:10px;padding:2px 4px 1px;bottom:3px;left:3px;border-width:1px;border-radius:6px}
+.g4 .art svg{width:74%}
+.oempty{display:grid;place-items:center;text-align:center;background:var(--pocket);border:1.5px dashed var(--pocket-edge);color:var(--ink-soft);font-size:12px;line-height:1.35;padding:4px}
+.opdan{grid-column:1/-1;margin:6px 0 0;font-size:13px;font-weight:700;color:var(--pink-deep)}
+.opdan:first-child{margin-top:0}
+.optype .chip.tc-lovely[aria-pressed="true"]{background:#E0689A;border-color:#E0689A;color:#fff}
+.optype .chip.tc-cool[aria-pressed="true"]{background:#3F97D6;border-color:#3F97D6;color:#fff}
+.optype .chip.tc-sexy[aria-pressed="true"]{background:#8E6AD8;border-color:#8E6AD8;color:#fff}
+.optype .chip.tc-pop[aria-pressed="true"]{background:#EC8340;border-color:#EC8340;color:#fff}
+.oslots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.opick{border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:5px;display:flex;flex-direction:column;gap:4px;text-align:left;min-width:0}
+.opick:disabled{opacity:.55}
+.opick .rar,.opick .qty{display:none}
+.opick .card.missing{opacity:1;filter:none}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
 .pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
@@ -368,7 +403,7 @@ textarea{resize:vertical}
 
   <nav class="controls" aria-label="보기 설정">
     <div>
-      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="info" role="tab">정보</button></div>
+      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="coord" role="tab">코디네이트</button><button data-tab="info" role="tab">정보</button></div>
       <div class="search bctl">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L20.5 20.5"/></svg>
         <input id="searchIn" type="search" list="coordSug" placeholder="코디 이름으로 검색" autocomplete="off" aria-label="코디 검색">
@@ -402,6 +437,7 @@ textarea{resize:vertical}
 
   <main id="binder"><p class="loading">바인더를 여는 중…</p></main>
   <section id="infoView" aria-live="polite"></section>
+  <section id="outfitView"></section>
 </div>
 
 <div class="dock">
@@ -420,6 +456,7 @@ textarea{resize:vertical}
 <dialog class="sheet" id="dFilter"><div class="body" id="filterBody"></div></dialog>
 <dialog class="zoomdlg" id="dZoom"><div id="zoomBody"></div></dialog>
 <dialog class="sheet" id="dBrand"><div class="body" id="brandBody"></div></dialog>
+<dialog class="sheet" id="dOutfit"><div class="body" id="outfitBody"></div></dialog>
 <dialog class="sheet" id="dMore"><div class="body" id="moreBody"></div></dialog>
 
 <input type="file" id="photoInput" accept="image/*" hidden>
@@ -482,21 +519,21 @@ const SHAPE = {
 function iconSVG(part,type){const sh=SHAPE[part];if(!sh)return "";const [d,r,,deco]=sh;
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="outline" d="${d}" fill-rule="${r}"/><path class="body" d="${d}" fill-rule="${r}"/>${deco?`<path class="deco" d="${deco}"/>`:""}</svg>`}
 
-const S = {info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
+const S = {outfits:[],oLayout:"4x1",oWant:false,info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
   last:{dan:"",rarity:"N",type:"lovely",source:"arcade",part:"top"}};
 let backend = {kind:"none"}, assets = null;
 
 /* ---------- prefs (per-viewer convenience) ---------- */
 function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(p){
   if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
-  if(p.tab==="info"||p.tab==="binder")S.tab=p.tab; if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
+  if(["info","binder","coord"].includes(p.tab))S.tab=p.tab; if(p.oLayout==="2x2"||p.oLayout==="4x1")S.oLayout=p.oLayout; S.oWant=!!p.oWant; if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
   if(p.f)DIMS.concat(["sign","want"]).forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); S.f.sign=S.f.sign.filter(v=>v==="star"); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
-function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
+function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,oLayout:S.oLayout,oWant:!!S.oWant,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -613,7 +650,7 @@ async function syncFromFile(){
   // 아티팩트에서 지운 카드: 휴대폰 기록(수량·사진·메모)이 없을 때만 정리
   if(Array.isArray(S.syncIds)){const gone=new Set(S.syncIds.filter(id=>!ids.has(id)));
     if(gone.size){S.cards=S.cards.filter(c=>{if(!gone.has(c.id))return true;
-      const keep=(S.qty[c.id]>0)||S.want[c.id]||S.photos[c.id]||S.photos[c.id+"-b"]||!!c.memo;
+      const keep=(S.qty[c.id]>0)||(S.outfits||[]).some(o=>[o.top,o.bottom,o.shoes,o.acc].includes(c.id))||S.want[c.id]||S.photos[c.id]||S.photos[c.id+"-b"]||!!c.memo;
       if(keep){kc++;delete c.lf;return true} rc++;return false})}}
   // 사진 (개인용만, 휴대폰에 사진이 없는 칸만 채움)
   let pc=0;
@@ -688,7 +725,7 @@ function renderInfo(){
     </article>`).join(""):`<div class="empty"><h2>아직 등록된 정보가 없어요</h2><p>${false?"\"+ 정보 추가\"로 출시 일정, 프로모션, 이벤트 같은 소식을 적어 두세요. 백업 파일(binder.json)을 올리면 앱에도 그대로 보여요.":"새 소식이 등록되면 여기에 보여요."}</p></div>`}`;
 }
 function render(){
-  renderInfo();
+  renderInfo(); renderOutfits();
   const total=S.cards.length, have=S.cards.filter(c=>q(c.id)>0).length;
   const sum=S.cards.reduce((a,c)=>a+q(c.id),0);
   const pct=total?Math.round(have/total*100):0;
@@ -1239,7 +1276,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.10.03-3";
+const APP_VERSION="2026.10.06-2";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1259,7 +1296,8 @@ function pver(s){s=String(s||"");let h=0;for(let i=0;i<s.length;i+=53)h=(h*31+s.
 function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0;CLOUD.repairVer=d.repairVer||""}}catch(e){}}
 function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last,repairVer:CLOUD.repairVer||""}))}catch(e){}}
 function localState(){
-  const st={cards:{},qty:{},want:{},brands:{},theme:S.theme||"",photos:{}};
+  const st={cards:{},qty:{},want:{},brands:{},outfits:{},theme:S.theme||"",photos:{}};
+  (S.outfits||[]).forEach(o=>{if(o&&o.id)st.outfits[o.id]=canon(o)});
   S.cards.forEach(c=>{if(c&&c.id){const o=Object.assign({},c);delete o.photo;st.cards[c.id]=canon(o)}});
   const q=cleanQty();for(const k in q)st.qty[k]=canon(q[k]);
   const w=cleanWant();for(const k in w)st.want[k]=canon(true);
@@ -1315,7 +1353,8 @@ async function cloudApplyRemote(R){
     sec("cards",R.cards,(k,v)=>{const i=S.cards.findIndex(c=>c.id===k);if(v===undefined){if(i>=0)S.cards.splice(i,1)}else{const o=JSON.parse(JSON.stringify(v));o.id=k;if(i>=0)S.cards[i]=o;else S.cards.push(o)}});
     sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
     sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
-    sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
+    sec("outfits",R.outfits,(k,v)=>{S.outfits=(S.outfits||[]).filter(o=>o.id!==k);if(v!==undefined)S.outfits.push(Object.assign({},v,{id:k}))});
+  sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
     sec("photos",R.photoIdx,()=>{});
     // 예전 버전에서 받다 만 사진 다시 받기 (업데이트 후 한 번)
     if(CLOUD.repairVer!==APP_VERSION&&R.photoIdx){for(const k in R.photoIdx){const r=String(R.photoIdx[k]);if(!S.photos[k]&&Sh.photos[k]===r&&!getPhotos.some(x=>x[0]===k)){delete Sh.photos[k];getPhotos.push([k,r])}}CLOUD.repairVer=APP_VERSION}
@@ -1346,7 +1385,7 @@ async function cloudPush(){
   try{
     const Sh=CLOUD.shadow, L=localState(), FP=firebase.firestore.FieldPath, DEL=firebase.firestore.FieldValue.delete();
     const args=[], after=[];
-    ["cards","qty","want","brands"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
+    ["cards","qty","want","brands","outfits"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
       keys.forEach(k=>{const l=L[name][k]||"",sh=(Sh[name]||{})[k]||"";if(l===sh)return;
         args.push(new FP(name,k),l?JSON.parse(l):DEL);after.push([name,k,l])})});
     if((L.theme?canon(L.theme):"")!==(Sh.theme||"")&&L.theme){args.push(new FP("theme"),L.theme);after.push(["theme",null,canon(L.theme)])}
@@ -1361,7 +1400,7 @@ async function cloudPush(){
   }catch(e){console.error(e);CLOUD.err=cloudErrText(e);toast(CLOUD.err);refreshCloudView()}
   CLOUD.busy=false; if(CLOUD.again){CLOUD.again=false;cloudSchedule(500)}
 }
-function hasLocalRecords(){return Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
+function hasLocalRecords(){return (S.outfits||[]).length||Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
 function withTimeout(pr,ms){return Promise.race([pr,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))])}
 function cloudErrText(e){const c=(e&&e.code)||"";const m=String((e&&e.message)||"");
   if(/api.?key|API_KEY|invalid-api-key/i.test(m)||c==="invalid-api-key")return "설정 파일(sync-config.json)의 apiKey가 맞지 않아요. Firebase 화면에서 apiKey를 다시 복사해 넣어 주세요";
@@ -1393,7 +1432,7 @@ async function cloudJoin(raw,mode){
   CLOUD.code=code; CLOUD.ref=ref; CLOUD.status="on";
   if(mode==="merge"){CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}}
   else{ // 코드 기록으로 바꾸기
-    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};
+    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};S.outfits=[];
     CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}};
   }
   toast("백업 코드 기록을 불러오는 중이에요");
@@ -1411,7 +1450,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)cloudSched
 /* ---------- backup ---------- */
 let pendingRestore=null;
 async function saveBackup(){
-  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),brands:S.brands,photos:S.bkPhotos?S.photos:{}};
+  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),outfits:S.outfits,brands:S.brands,photos:S.bkPhotos?S.photos:{}};
   const d=new Date(),stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
   const name=`aikatsu-encore-backup-${stamp}.json`;
   const file=new File([JSON.stringify(data)],name,{type:"application/json"});
@@ -1423,16 +1462,99 @@ async function saveBackup(){
 $("#restoreInput").addEventListener("change",async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.cards))throw 0;
-    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
+    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},outfits:Array.isArray(d.outfits)?d.outfits:[],brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
   catch(err){toast("이 파일은 아이카츠 앙코르 백업 파일이 아니에요")}
 });
 async function doRestore(){
   const b=pendingRestore;if(!b)return;
-  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.brands=b.brands;S.photos=Object.assign({},b.photos);
+  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.outfits=b.outfits||[];S.brands=b.brands;S.photos=Object.assign({},b.photos);
   if(b.theme){S.theme=b.theme;savePrefs();applyTheme(S.theme)}
   saveLocal();saveLocalPhotos();pendingRestore=null;
   dMore.close();render();toast(`카드 ${S.cards.length}장을 불러왔어요`);
 }
+
+/* ---------- 코디네이트 ---------- */
+const SLOTS=[["top","상의",["top","dress","full"]],["bottom","하의",["bottom"]],["shoes","슈즈",["shoes"]],["acc","헤어 악세사리",["acc"]]];
+function slotNeeded(o,k){const t=byId(o.top),tp=t&&t.part;if(k==="bottom")return !(tp==="dress"||tp==="full");if(k==="shoes")return tp!=="full";return k!=="acc"}
+function outfitName(o){return o.name||`코디 ${o.no}`}
+function nextOutfitNo(){return Math.max(0,...(S.outfits||[]).map(o=>o.no||0))+1}
+function saveOutfits(){saveLocal();}
+function renderOutfits(){
+  const v=$("#outfitView"); if(!v)return;
+  document.body.classList.toggle("coord-mode",S.tab==="coord");
+  if(S.tab!=="coord"){v.innerHTML="";return}
+  const lay=S.oLayout==="2x2"?"2x2":"4x1";
+  let list=(S.outfits||[]).slice().sort((a,b)=>(b.no||0)-(a.no||0));
+  if(S.oWant)list=list.filter(o=>o.want);
+  v.innerHTML=`<div class="otool"><button class="btn primary" data-oa="new">+ 조합하기</button>
+    <div class="seg oseg">${[["4x1","4×1"],["2x2","2×2"]].map(([k,t])=>`<button data-ol="${k}" aria-pressed="${lay===k}">${t}</button>`).join("")}</div></div>
+    <div class="ofilter"><span class="label" style="margin:0">필터</span><button class="chip wantchip" data-oa="want" aria-pressed="${!!S.oWant}">♥ 원해요</button></div>
+    ${list.length?list.map(o=>{
+      const slots=SLOTS.filter(([k])=>o[k]||slotNeeded(o,k));
+      const have=slots.filter(([k])=>{const c=byId(o[k]);return c&&q(c.id)>0}).length;
+      return `<article class="outfit" data-oid="${esc(o.id)}"><div class="ohead">
+        <button class="oname" data-oa="edit">${esc(outfitName(o))}<small>${have}/${slots.length}장 보유 · 눌러서 수정</small></button>
+        <button class="heart" data-oa="heart" aria-pressed="${!!o.want}" aria-label="원해요">${o.want?"♥":"♡"}</button></div>
+        <div class="ogrid g${lay==="2x2"?2:4}">${slots.map(([k,label])=>{const c=byId(o[k]);
+          return `<button class="oslot" ${c?`data-cid="${esc(c.id)}"`:"disabled"}><span class="olabel">${k==="top"&&c?esc(PART[c.part]||label):label}</span>${c?cardHTML(c,{noHeart:true}):`<div class="card oempty">카드 없음</div>`}</button>`}).join("")}</div></article>`}).join("")
+    :`<div class="empty"><h2>${S.oWant?"원해요를 누른 코디가 없어요":"아직 조합한 코디가 없어요"}</h2><p>${S.oWant?"코디 오른쪽 위의 하트를 눌러 보세요.":"\"+ 조합하기\"로 상의, 하의, 슈즈, 헤어 악세사리를 골라 나만의 코디를 만들어 보세요."}</p></div>`}`;
+}
+const dOutfit=$("#dOutfit"); let oEdit=null,oDraft=null,oPick=null,oQuery="",oArm=false,oType="all";
+function openOutfit(id){oEdit=id;const o=id?(S.outfits||[]).find(x=>x.id===id):null;
+  oDraft=o?Object.assign({},o):{name:"",top:"",bottom:"",shoes:"",acc:""};oPick=null;oQuery="";oArm=false;renderOutfitSheet();if(!dOutfit.open)dOutfit.showModal()}
+function opGridHTML(){const [k,,parts]=SLOTS.find(s=>s[0]===oPick),qn=norm(oQuery);
+  const bs=blockSorter(S.cards);
+  const list=S.cards.filter(c=>parts.includes(c.part)&&(oType==="all"||(oType==="none"?!TYPE[c.type]:c.type===oType))&&(!qn||[c.name,c.no,c.coord,c.jname].some(x=>norm(x||"").includes(qn))))
+    .sort((a,b)=>(a.source==="promo")-(b.source==="promo")||cmp(a.dan||"",b.dan||"")||bs(a,b));
+  let lastDan=null;
+  return list.length?`<div class="pk-grid">${list.map(c=>{const dk=c.source==="promo"?"프로모션":(c.dan||"탄 미정");const head=dk!==lastDan?`<p class="opdan">${esc(dk)}</p>`:"";lastDan=dk;return head+`<button class="pk-card" data-pc="${esc(c.id)}" aria-pressed="${oDraft[k]===c.id}">${cardHTML(c,{noCap:true,noHeart:true})}<span class="pk-cap"><b>${esc(dispNo(c))}</b>${esc(c.name)}</span></button>`}).join("")}</div>`
+    :'<p class="muted" style="text-align:center;padding:24px 0">맞는 카드가 없어요</p>'}
+function renderOutfitSheet(){const b=$("#outfitBody");
+  if(oPick){const [k,label]=SLOTS.find(s=>s[0]===oPick);
+    b.innerHTML=`<div class="grab"></div><h3>${label} 고르기</h3>
+      <div class="search" style="margin:8px 0 10px"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L20.5 20.5"/></svg><input id="opSearch" type="search" placeholder="카드 이름, 번호, 코디로 찾기" value="${esc(oQuery)}" autocomplete="off"></div>
+      <div class="row optype" style="margin-bottom:10px">${[["all","전체"],...TYPE_ORDER.map(t=>[t,TYPE[t]])].map(([k,t])=>`<button class="chip${k!=="all"?" tc-"+k:""}" data-ot="${k}" aria-pressed="${oType===k}">${esc(t)}</button>`).join("")}</div>
+      <div id="opGrid">${opGridHTML()}</div>
+      <div class="pk-foot"><div class="row">${oDraft[k]?'<button class="btn" data-oe="clear">선택 해제</button>':""}<button class="btn grow" data-oe="back">돌아가기</button></div></div>`;
+    const i=$("#opSearch");i.addEventListener("input",()=>{oQuery=i.value;$("#opGrid").innerHTML=opGridHTML()});return}
+  const ph=oEdit?`코디 ${oDraft.no}`:`코디 ${nextOutfitNo()}`;
+  b.innerHTML=`<div class="grab"></div><h3>${oEdit?"코디 수정":"코디 조합하기"}</h3>
+    <div class="field" style="margin:10px 0 12px"><label for="oName">코디 이름 (선택)</label><input id="oName" value="${esc(oDraft.name||"")}" placeholder="비워 두면 '${esc(ph)}'"></div>
+    <div class="oslots">${SLOTS.map(([k,label])=>{const need=slotNeeded(oDraft,k)||k==="acc",c=byId(oDraft[k]);
+      return `<button class="opick" data-os="${k}" ${!need&&!c?"disabled":""}><span class="olabel">${label}${k==="acc"?" (선택)":""}</span>${c?cardHTML(c,{noCap:true,noHeart:true}):`<div class="card oempty">${need?"+ 고르기":(k==="bottom"?"원피스라<br>필요 없어요":"풀코디라<br>필요 없어요")}</div>`}${c?`<span class="pk-cap">${esc(c.name)}</span>`:""}</button>`}).join("")}</div>
+    <p class="muted" style="font-size:12px;margin-top:8px">상의 칸에서는 원피스, 풀코디도 고를 수 있어요.</p>
+    <div class="row" style="margin-top:14px">${oEdit?`<button class="btn danger${oArm?" arm":""}" data-oe="del">${oArm?"한 번 더 누르면 삭제":"삭제"}</button>`:""}<button class="btn" data-oe="cancel">취소</button><button class="btn primary grow" data-oe="save">저장</button></div>`;
+  $("#oName").addEventListener("input",e=>{oDraft.name=e.target.value});
+}
+$("#outfitBody").addEventListener("click",e=>{
+  const ot=e.target.closest("[data-ot]");if(ot){oType=ot.dataset.ot;document.querySelectorAll("#outfitBody [data-ot]").forEach(x=>x.setAttribute("aria-pressed",x===ot));$("#opGrid").innerHTML=opGridHTML();return}
+  const pc=e.target.closest("[data-pc]");if(pc&&oPick){oDraft[oPick]=pc.dataset.pc;if(!slotNeeded(oDraft,"bottom"))oDraft.bottom="";if(!slotNeeded(oDraft,"shoes"))oDraft.shoes="";oPick=null;renderOutfitSheet();return}
+  const os=e.target.closest("[data-os]");if(os){oPick=os.dataset.os;oQuery="";renderOutfitSheet();$("#outfitBody").scrollTop=0;return}
+  const b=e.target.closest("[data-oe]");if(!b)return;const a=b.dataset.oe;
+  if(a==="back"){oPick=null;renderOutfitSheet();return}
+  if(a==="clear"){oDraft[oPick]="";oPick=null;renderOutfitSheet();return}
+  if(a==="cancel"){dOutfit.close();return}
+  if(a==="del"){if(!oArm){oArm=true;renderOutfitSheet();return}S.outfits=(S.outfits||[]).filter(x=>x.id!==oEdit);saveOutfits();dOutfit.close();render();toast("코디를 지웠어요");return}
+  if(a==="save"){
+    const miss=SLOTS.filter(([k])=>slotNeeded(oDraft,k)&&!oDraft[k]).map(s=>s[1]);
+    if(miss.length){toast(`${miss.join(", ")} 카드를 골라 주세요`);return}
+    const o={id:oEdit||("o"+uid().slice(1)),no:oEdit?oDraft.no:nextOutfitNo()};
+    const nm=String(oDraft.name||"").trim();if(nm)o.name=nm;
+    SLOTS.forEach(([k])=>{if(oDraft[k])o[k]=oDraft[k]});if(oDraft.want)o.want=true;
+    const arr=(S.outfits||[]).filter(x=>x.id!==o.id);arr.push(o);S.outfits=arr;saveOutfits();dOutfit.close();render();
+    toast(`"${outfitName(o)}"을(를) 저장했어요`)}
+});
+dOutfit.addEventListener("click",e=>{if(e.target===dOutfit)dOutfit.close()});
+$("#outfitView").addEventListener("click",e=>{
+  const l=e.target.closest("[data-ol]");if(l){S.oLayout=l.dataset.ol;savePrefs();renderOutfits();return}
+  const sl=e.target.closest(".oslot[data-cid]");if(sl){openDetail(sl.dataset.cid);return}
+  const b=e.target.closest("[data-oa]");if(!b)return;const a=b.dataset.oa;
+  if(a==="new"){openOutfit(null);return}
+  if(a==="want"){S.oWant=!S.oWant;savePrefs();renderOutfits();return}
+  const id=b.closest("[data-oid]")&&b.closest("[data-oid]").dataset.oid,o=(S.outfits||[]).find(x=>x.id===id);if(!o)return;
+  if(a==="edit"){openOutfit(id);return}
+  if(a==="heart"){if(o.want)delete o.want;else o.want=true;S.outfits=S.outfits.slice();saveOutfits();renderOutfits();toast(o.want?"원해요에 담았어요":"원해요에서 뺐어요")}
+});
 
 /* ---------- global events ---------- */
 let searchT;
