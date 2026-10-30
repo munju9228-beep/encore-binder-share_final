@@ -1,7 +1,7 @@
 // 아이카츠 앙코르: 인터넷이 되면 항상 최신 파일을, 안 되면 저장해 둔 파일을 씁니다.
 const PREFIX = "encore-binder-";
-const CACHE = PREFIX + "v6";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const CACHE = PREFIX + "v7";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./jszip.min.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(CORE.map(u => fetch(u, {cache: "reload"}).then(r => r.ok && c.put(u, r)).catch(() => {})))).then(() => self.skipWaiting()));
 });
