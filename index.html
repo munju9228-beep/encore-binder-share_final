@@ -17,6 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
 :root{
+  --gray-tile:#ECE7EA; --gray-ink:#7C6E74;
   --cover:#FFD1DE; --cover-2:#F5A7C0; --cover-ink:#5A2A3C; --cover-soft:#8A4A62;
   --pink:#F5A7C0; --pink-deep:#D65E8A; --badge-bg:#FFFFFF; --toast:#D65E8A;
   --bg:#FFF2F6; --paper:#FFFFFF; --ink:#4A2634; --ink-soft:#976676;
@@ -33,13 +34,13 @@
   :root:not([data-theme="light"]){
     --bg:#1F1418; --paper:#2B1D23; --ink:#FCEBF1; --ink-soft:#CDA3B3;
     --pocket:#35242C; --pocket-edge:#4E3440; --hole:#1F1418; --line:#43303A;
-    --chip:#3A2730; --chip-on:#F5A7C0; --chip-on-ink:#3A1624; --sheen:rgba(255,255,255,.12); --badge-bg:#FFF2F6;
+    --chip:#3A2730; --chip-on:#F5A7C0; --chip-on-ink:#3A1624; --sheen:rgba(255,255,255,.12); --badge-bg:#FFF2F6; --gray-tile:#3B3336; --gray-ink:#C9BCC1;
   }
 }
 :root[data-theme="dark"]{
   --bg:#1F1418; --paper:#2B1D23; --ink:#FCEBF1; --ink-soft:#CDA3B3;
   --pocket:#35242C; --pocket-edge:#4E3440; --hole:#1F1418; --line:#43303A;
-  --chip:#3A2730; --chip-on:#F5A7C0; --chip-on-ink:#3A1624; --sheen:rgba(255,255,255,.12); --badge-bg:#FFF2F6;
+  --chip:#3A2730; --chip-on:#F5A7C0; --chip-on-ink:#3A1624; --sheen:rgba(255,255,255,.12); --badge-bg:#FFF2F6; --gray-tile:#3B3336; --gray-ink:#C9BCC1;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
@@ -217,7 +218,8 @@ button{cursor:pointer}
 .cstatus{font-size:13px;color:var(--ink-soft);margin:8px 2px 0}
 .codein{display:flex;gap:8px}
 .codein input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-size:16px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
-.toptabs{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:6px;margin-bottom:8px}
+.toptabs{display:grid;grid-template-columns:1.12fr 1.12fr .8fr .8fr;gap:6px;margin-bottom:8px}
+.toptabs button{white-space:nowrap}
 .toptabs button{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:9px 6px;font-size:15px;color:var(--ink-soft)}
 .toptabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 #infoView{display:none;padding:4px 16px 0}
@@ -239,6 +241,34 @@ button{cursor:pointer}
 #outfitView{display:none;padding:4px 16px 0}
 .coord-mode #outfitView{display:block}
 .coord-mode .bctl,.coord-mode #binder{display:none!important}
+#seekView{display:none;padding:4px 16px 0}
+.seek-mode #seekView{display:block}
+.seek-mode .bctl,.seek-mode #binder{display:none!important}
+.sk-sec{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+.sk-head{display:flex;align-items:baseline;gap:8px;margin:0 2px 10px}
+.sk-head h3{font-family:var(--display);font-weight:400;font-size:19px;margin:0;flex:1}
+.sk-head h3 small{font-family:var(--body);font-size:12px;color:var(--ink-soft);margin-left:6px}
+.sk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 8px;align-items:start}
+.sk-cell{min-width:0;display:flex;flex-direction:column;gap:3px}
+.sk-dan{font-size:10.5px;font-weight:700;color:var(--pink-deep);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-card{border:0;background:none;padding:0;display:block;width:100%}
+.sk-card .card.missing{opacity:1;filter:none}
+.sk-card .rar,.sk-card .qty,.sk-card .wheart{display:none}
+.sk-cell .card .art svg{width:74%}
+.sk-no{font-size:10px;color:var(--ink-soft);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-name{font-size:11px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-all}
+.sk-step{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:2px}
+.sk-step button{border:0;background:var(--chip);width:26px;height:24px;font-size:15px;line-height:1;color:var(--pink-deep);padding:0}
+.sk-step span{font-family:var(--display);font-size:13px}
+.sk-add{border:0;padding:0;background:none;display:flex;flex-direction:column;gap:3px;min-width:0}
+.sk-add .tile{aspect-ratio:63/88;width:100%;border-radius:10px;background:var(--gray-tile);color:var(--gray-ink);display:grid;place-content:center;gap:2px;text-align:center;font-size:12px;line-height:1.3;font-weight:700}
+.sk-add .tile b{font-size:26px;line-height:1;font-weight:400}
+.sk-add .sk-dan{visibility:hidden}
+.sk-acts{display:flex;gap:8px;margin:4px 0 14px}
+.sk-acts .btn.primary{flex:1}
+.sk-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pk-card .pk-n{position:absolute;top:6px;right:6px;min-width:22px;height:22px;padding:0 5px;border-radius:11px;background:var(--pink-deep);color:#fff;font-family:var(--display);font-size:13px;display:grid;place-items:center;box-shadow:0 0 0 2px #fff;z-index:3}
+.pk-card .pk-own{font-size:10px;color:var(--ink-soft)}
 .otool{display:flex;gap:8px;align-items:center;margin:6px 0 8px}
 .otool .btn.primary{flex:1}
 .seg.oseg{grid-template-columns:repeat(2,auto);padding:3px}
@@ -427,7 +457,7 @@ textarea{resize:vertical}
 
   <nav class="controls" aria-label="보기 설정">
     <div>
-      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="coord" role="tab">코디네이트</button><button data-tab="info" role="tab">정보</button></div>
+      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="coord" role="tab">코디네이트</button><button data-tab="seek" role="tab">거래</button><button data-tab="info" role="tab">정보</button></div>
       <div class="search bctl">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L20.5 20.5"/></svg>
         <input id="searchIn" type="search" list="coordSug" placeholder="코디 이름으로 검색" autocomplete="off" aria-label="코디 검색">
@@ -462,6 +492,7 @@ textarea{resize:vertical}
   <main id="binder"><p class="loading">바인더를 여는 중…</p></main>
   <section id="infoView" aria-live="polite"></section>
   <section id="outfitView"></section>
+  <section id="seekView"></section>
   <footer class="disclaimer"><p>아이카츠! 앙코르 카드와 정보를 정리한 비영리·비공식 매체입니다.</p><p>이 매체는 공식 서비스와 무관하며 관련 이미지들의 권리는 반다이, 반다이 남코 등에 있습니다.</p></footer>
 </div>
 
@@ -481,6 +512,7 @@ textarea{resize:vertical}
 <dialog class="sheet" id="dFilter"><div class="body" id="filterBody"></div></dialog>
 <dialog class="zoomdlg" id="dZoom"><div id="zoomBody"></div></dialog>
 <dialog class="sheet" id="dBrand"><div class="body" id="brandBody"></div></dialog>
+<dialog class="sheet" id="dSeek"><div class="body" id="seekBody"></div></dialog>
 <dialog class="sheet" id="dOutfit"><div class="body" id="outfitBody"></div></dialog>
 <dialog class="popdlg" id="dPop" aria-label="새 소식"><div id="popBody"></div></dialog>
 <dialog class="sheet" id="dMore"><div class="body" id="moreBody"></div></dialog>
@@ -545,21 +577,21 @@ const SHAPE = {
 function iconSVG(part,type){const sh=SHAPE[part];if(!sh)return "";const [d,r,,deco]=sh;
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="outline" d="${d}" fill-rule="${r}"/><path class="body" d="${d}" fill-rule="${r}"/>${deco?`<path class="deco" d="${deco}"/>`:""}</svg>`}
 
-const S = {outfits:[],oLayout:"4x1",oWant:false,info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
+const S = {seek:{w:{},s:{},t:{}},outfits:[],oLayout:"4x1",oWant:false,info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
   last:{dan:"",rarity:"N",type:"lovely",source:"arcade",part:"top"}};
 let backend = {kind:"none"}, assets = null;
 
 /* ---------- prefs (per-viewer convenience) ---------- */
 function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(p){
   if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
-  if(["info","binder","coord"].includes(p.tab))S.tab=p.tab; if(["all","official","app"].includes(p.infoCat))S.infoCat=p.infoCat; if(p.oLayout==="2x2"||p.oLayout==="4x1")S.oLayout=p.oLayout; S.oWant=!!p.oWant; if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
+  if(["info","binder","coord","seek"].includes(p.tab))S.tab=p.tab; if(["all","official","app"].includes(p.infoCat))S.infoCat=p.infoCat; if(p.oLayout==="2x2"||p.oLayout==="4x1")S.oLayout=p.oLayout; S.oWant=!!p.oWant; if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
   if(p.f)DIMS.concat(["sign","want"]).forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); S.f.sign=S.f.sign.filter(v=>v==="star"); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
 function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,infoCat:S.infoCat||"all",oLayout:S.oLayout,oWant:!!S.oWant,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.seek=normSeek(d.seek);S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,seek:S.seek,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -743,6 +775,7 @@ function linkify(t){return esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" 
 function renderInfo(){
   const v=$("#infoView"); if(!v)return;
   document.body.classList.toggle("info-mode",S.tab==="info");
+  document.body.classList.toggle("seek-mode",S.tab==="seek");
   document.querySelectorAll("#topTabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   if(S.tab!=="info"){v.innerHTML="";return}
   const allI=S.info||[], ic=S.infoCat||"all", list=ic==="all"?allI:allI.filter(x=>infoCatOf(x)===ic);
@@ -756,7 +789,7 @@ function renderInfo(){
     </article>`).join(""):`<div class="empty"><h2>아직 등록된 정보가 없어요</h2><p>${false?"\"+ 정보 추가\"로 출시 일정, 프로모션, 이벤트 같은 소식을 적어 두세요. 백업 파일(binder.json)을 올리면 앱에도 그대로 보여요.":"새 소식이 등록되면 여기에 보여요."}</p></div>`}`;
 }
 function render(){
-  renderInfo(); renderOutfits();
+  renderInfo(); renderOutfits(); renderSeek();
   const total=S.cards.length, have=S.cards.filter(c=>q(c.id)>0).length;
   const sum=S.cards.reduce((a,c)=>a+q(c.id),0);
   const pct=total?Math.round(have/total*100):0;
@@ -1316,7 +1349,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.09-1";
+const APP_VERSION="2026.11.17-1";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1336,7 +1369,8 @@ function pver(s){s=String(s||"");let h=0;for(let i=0;i<s.length;i+=53)h=(h*31+s.
 function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0;CLOUD.repairVer=d.repairVer||""}}catch(e){}}
 function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last,repairVer:CLOUD.repairVer||""}))}catch(e){}}
 function localState(){
-  const st={cards:{},qty:{},want:{},brands:{},outfits:{},theme:S.theme||"",photos:{}};
+  const st={cards:{},qty:{},want:{},brands:{},outfits:{},seekW:{},seekS:{},seekT:{},theme:S.theme||"",photos:{}};
+  [["w","seekW"],["s","seekS"],["t","seekT"]].forEach(([m,n])=>{const mp=(S.seek&&S.seek[m])||{};for(const k in mp)if(mp[k]>0)st[n][k]=canon(mp[k])});
   (S.outfits||[]).forEach(o=>{if(o&&o.id)st.outfits[o.id]=canon(o)});
   S.cards.forEach(c=>{if(c&&c.id){const o=Object.assign({},c);delete o.photo;st.cards[c.id]=canon(o)}});
   const q=cleanQty();for(const k in q)st.qty[k]=canon(q[k]);
@@ -1393,6 +1427,7 @@ async function cloudApplyRemote(R){
     sec("cards",R.cards,(k,v)=>{const i=S.cards.findIndex(c=>c.id===k);if(v===undefined){if(i>=0)S.cards.splice(i,1)}else{const o=JSON.parse(JSON.stringify(v));o.id=k;if(i>=0)S.cards[i]=o;else S.cards.push(o)}});
     sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
     sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
+    [["w","seekW"],["s","seekS"],["t","seekT"]].forEach(([m,n])=>sec(n,R[n],(k,v)=>{S.seek=S.seek||{w:{},s:{},t:{}};S.seek[m]=S.seek[m]||{};const x=Math.floor(+v);if(x>0)S.seek[m][k]=Math.min(x,99);else delete S.seek[m][k]}));
     sec("outfits",R.outfits,(k,v)=>{S.outfits=(S.outfits||[]).filter(o=>o.id!==k);if(v!==undefined)S.outfits.push(Object.assign({},v,{id:k}))});
   sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
     sec("photos",R.photoIdx,()=>{});
@@ -1425,7 +1460,7 @@ async function cloudPush(){
   try{
     const Sh=CLOUD.shadow, L=localState(), FP=firebase.firestore.FieldPath, DEL=firebase.firestore.FieldValue.delete();
     const args=[], after=[];
-    ["cards","qty","want","brands","outfits"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
+    ["cards","qty","want","brands","outfits","seekW","seekS","seekT"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
       keys.forEach(k=>{const l=L[name][k]||"",sh=(Sh[name]||{})[k]||"";if(l===sh)return;
         args.push(new FP(name,k),l?JSON.parse(l):DEL);after.push([name,k,l])})});
     if((L.theme?canon(L.theme):"")!==(Sh.theme||"")&&L.theme){args.push(new FP("theme"),L.theme);after.push(["theme",null,canon(L.theme)])}
@@ -1440,7 +1475,7 @@ async function cloudPush(){
   }catch(e){console.error(e);CLOUD.err=cloudErrText(e);toast(CLOUD.err);refreshCloudView()}
   CLOUD.busy=false; if(CLOUD.again){CLOUD.again=false;cloudSchedule(500)}
 }
-function hasLocalRecords(){return (S.outfits||[]).length||Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
+function hasLocalRecords(){return (S.outfits||[]).length||SK_MODES.some(m=>Object.keys((S.seek&&S.seek[m])||{}).length)||Object.keys(cleanQty()).length||Object.keys(cleanWant()).length||Object.keys(S.photos).length||S.cards.some(c=>c.memo)}
 function withTimeout(pr,ms){return Promise.race([pr,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))])}
 function cloudErrText(e){const c=(e&&e.code)||"";const m=String((e&&e.message)||"");
   if(/api.?key|API_KEY|invalid-api-key/i.test(m)||c==="invalid-api-key")return "설정 파일(sync-config.json)의 apiKey가 맞지 않아요. Firebase 화면에서 apiKey를 다시 복사해 넣어 주세요";
@@ -1472,7 +1507,7 @@ async function cloudJoin(raw,mode){
   CLOUD.code=code; CLOUD.ref=ref; CLOUD.status="on";
   if(mode==="merge"){CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}}
   else{ // 코드 기록으로 바꾸기
-    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};S.outfits=[];
+    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};S.outfits=[];S.seek={w:{},s:{},t:{}};
     CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}};
   }
   toast("백업 코드 기록을 불러오는 중이에요");
@@ -1490,7 +1525,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)cloudSched
 /* ---------- backup ---------- */
 let pendingRestore=null;
 async function saveBackup(){
-  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),outfits:S.outfits,brands:S.brands,photos:S.bkPhotos?S.photos:{}};
+  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),outfits:S.outfits,seek:S.seek,brands:S.brands,photos:S.bkPhotos?S.photos:{}};
   const d=new Date(),stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
   const name=`aikatsu-encore-backup-${stamp}.json`;
   const file=new File([JSON.stringify(data)],name,{type:"application/json"});
@@ -1502,12 +1537,12 @@ async function saveBackup(){
 $("#restoreInput").addEventListener("change",async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.cards))throw 0;
-    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},outfits:Array.isArray(d.outfits)?d.outfits:[],brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
+    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},outfits:Array.isArray(d.outfits)?d.outfits:[],seek:normSeek(d.seek),brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
   catch(err){toast("이 파일은 아이카츠 앙코르 백업 파일이 아니에요")}
 });
 async function doRestore(){
   const b=pendingRestore;if(!b)return;
-  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.outfits=b.outfits||[];S.brands=b.brands;S.photos=Object.assign({},b.photos);
+  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.outfits=b.outfits||[];S.seek=b.seek||{w:{},s:{},t:{}};S.brands=b.brands;S.photos=Object.assign({},b.photos);
   if(b.theme){S.theme=b.theme;savePrefs();applyTheme(S.theme)}
   saveLocal();saveLocalPhotos();pendingRestore=null;
   dMore.close();render();toast(`카드 ${S.cards.length}장을 불러왔어요`);
@@ -1595,6 +1630,134 @@ $("#outfitView").addEventListener("click",e=>{
   if(a==="edit"){openOutfit(id);return}
   if(a==="heart"){if(o.want)delete o.want;else o.want=true;S.outfits=S.outfits.slice();saveOutfits();renderOutfits();toast(o.want?"원해요에 담았어요":"원해요에서 뺐어요")}
 });
+
+/* ---------- 거래 (구하는 카드 / 판매하는 카드 / 교환 가능 카드) ---------- */
+const SK_MODES=["w","s","t"];
+function normSeek(d){const o={w:{},s:{},t:{}};if(d)SK_MODES.forEach(k=>{const m=d[k];if(m&&typeof m==="object")for(const id in m){const n=Math.floor(+m[id]);if(n>0)o[k][id]=Math.min(n,99)}});return o}
+const SK_TITLE={w:"구하는 카드",s:"판매하는 카드",t:"교환 가능 카드"};
+const SK_F={w:[["all","전체"],["want","♥ 원해요"],["need","미보유"]],s:[["all","전체"],["dup","중복 보유"],["have","보유"]],t:[["all","전체"],["dup","중복 보유"],["have","보유"]]};
+let skMode="w",skF={w:"need",s:"dup",t:"dup"},skQ="";
+function saveSeek(){const o={};SK_MODES.forEach(m=>o[m]=Object.assign({},S.seek[m]));S.seek=o;saveLocal()}
+function danOf(c){return c.source==="promo"?"프로모션":(c.dan||"탄 미정")}
+function seekSort(list){const bs=blockSorter(S.cards);return list.sort((a,b)=>(a.source==="promo")-(b.source==="promo")||cmp(a.dan||"",b.dan||"")||bs(a,b))}
+function seekList(m){const mp=S.seek[m]||{};return seekSort(S.cards.filter(c=>mp[c.id]>0))}
+function setSeek(m,id,n){if(n>0)S.seek[m][id]=Math.min(n,99);else delete S.seek[m][id];saveSeek()}
+function renderSeek(){
+  const v=$("#seekView"); if(!v)return;
+  if(S.tab!=="seek"){v.innerHTML="";return}
+  const sec=m=>{const list=seekList(m),tot=list.reduce((a,c)=>a+(S.seek[m][c.id]||0),0);
+    return `<section class="sk-sec" data-skm="${m}"><div class="sk-head"><h3>${SK_TITLE[m]}<small>${list.length}종 · ${tot}장</small></h3>${list.length?'<button class="linkbtn" data-sk="clear">비우기</button>':""}</div>
+      <div class="sk-grid"><button class="sk-add" data-sk="pick"><span class="sk-dan">-</span><span class="tile"><b>+</b>${SK_TITLE[m]}</span></button>
+      ${list.map(c=>{const n=S.seek[m][c.id];return `<div class="sk-cell" data-id="${esc(c.id)}"><span class="sk-dan">${esc(danOf(c))}</span>
+        <button class="sk-card" data-sk="detail">${cardHTML(c,{noCap:true,noHeart:true})}</button>
+        <span class="sk-no">${esc(dispNo(c)||"번호 없음")}</span><span class="sk-name">${esc(c.name)}</span>
+        <span class="sk-step"><button data-sk="dec" aria-label="1장 빼기">−</button><span>×${n}</span><button data-sk="inc" aria-label="1장 더하기">+</button></span></div>`}).join("")}</div></section>`};
+  v.innerHTML=`${SK_MODES.map(sec).join("")}
+    <div class="sk-acts"><button class="btn primary" data-sk="img">이미지 다운로드</button></div>
+    <p class="muted" style="font-size:12px;margin:-6px 2px 16px">회색 칸을 눌러 카드를 고르세요. 누를 때마다 1장씩 늘어나요.</p>`;
+}
+const dSeek=$("#dSeek");
+function skPass(c){const f=skF[skMode],n=q(c.id);
+  if(f==="want")return !!S.want[c.id]; if(f==="need")return n<=0; if(f==="have")return n>0; if(f==="dup")return n>=2; return true}
+function skGridHTML(){const qn=norm(skQ),mp=S.seek[skMode];
+  const list=seekSort(S.cards.filter(c=>skPass(c)&&(!qn||[c.name,c.no,coordsOf(c).join(" "),c.jname].some(x=>norm(x||"").includes(qn)))));
+  let last=null;
+  return list.length?`<div class="pk-grid">${list.map(c=>{const dk=danOf(c),head=dk!==last?`<p class="opdan">${esc(dk)}</p>`:"";last=dk;const n=mp[c.id]||0;
+    return head+`<button class="pk-card" data-skc="${esc(c.id)}" aria-pressed="${n>0}">${n>0?`<span class="pk-n">${n}</span>`:""}${cardHTML(c,{noCap:true,noHeart:true})}<span class="pk-cap"><b>${esc(dispNo(c))}</b>${esc(c.name)}</span><span class="pk-own">보유 ${q(c.id)}장${S.want[c.id]?" · ♥":""}</span></button>`}).join("")}</div>`
+    :`<p class="muted" style="text-align:center;padding:24px 0">${skF[skMode]==="want"?"원해요를 누른 카드가 없어요":"맞는 카드가 없어요"}</p>`}
+function refreshSeekGrid(){const g=$("#skGrid");if(g)g.innerHTML=skGridHTML()}
+function openSeekPick(m){skMode=m;skQ="";
+  $("#seekBody").innerHTML=`<div class="grab"></div><h3>${SK_TITLE[m]} 고르기</h3>
+    <div class="search" style="margin:8px 0 10px"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L20.5 20.5"/></svg><input id="skSearch" type="search" placeholder="카드 이름, 번호, 코디로 찾기" autocomplete="off"></div>
+    <div class="sk-filter" role="group" aria-label="필터">${SK_F[m].map(([k,t])=>`<button class="chip${k==="want"?" wantchip":""}" data-skf="${k}" aria-pressed="${skF[m]===k}">${t}</button>`).join("")}</div>
+    <p class="muted" style="font-size:12px;margin:0 0 8px">카드를 누를 때마다 1장씩 늘어나요.</p>
+    <div id="skGrid">${skGridHTML()}</div>
+    <div class="pk-foot"><button class="btn primary" style="width:100%" data-ske="done">완료</button></div>`;
+  $("#skSearch").addEventListener("input",e=>{skQ=e.target.value;refreshSeekGrid()});
+  if(!dSeek.open)dSeek.showModal(); $("#seekBody").scrollTop=0}
+function bumpPick(btn,id,n){btn.setAttribute("aria-pressed",n>0);let b=btn.querySelector(".pk-n");
+  if(n>0){if(!b){b=document.createElement("span");b.className="pk-n";btn.prepend(b)}b.textContent=n}else if(b)b.remove()}
+$("#seekBody").addEventListener("click",e=>{
+  const f=e.target.closest("[data-skf]");if(f){skF[skMode]=f.dataset.skf;document.querySelectorAll("#seekBody [data-skf]").forEach(x=>x.setAttribute("aria-pressed",x===f));refreshSeekGrid();return}
+  const c=e.target.closest("[data-skc]");if(c){const id=c.dataset.skc,m=skMode,before=S.seek[m][id]||0,cd=byId(id);setSeek(m,id,before+1);bumpPick(c,id,before+1);renderSeek();
+    toast(`${cd?cd.name:"카드"} ${before+1}장`,"되돌리기",()=>{setSeek(m,id,before);const b=document.querySelector(`#seekBody [data-skc="${CSS.escape(id)}"]`);if(b)bumpPick(b,id,before);renderSeek()});return}
+  if(e.target.closest('[data-ske="done"]'))dSeek.close();
+});
+let skClearArm=null;
+$("#seekView").addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;const a=b.dataset.sk;
+  if(a==="img"){makeSeekImage();return}
+  const sec=b.closest("[data-skm]"),m=sec&&sec.dataset.skm;if(!m)return;
+  if(a==="pick"){openSeekPick(m);return}
+  if(a==="clear"){if(skClearArm!==m){skClearArm=m;b.textContent="한 번 더 누르면 비워요";setTimeout(()=>{if(skClearArm===m){skClearArm=null;renderSeek()}},2500);return}
+    skClearArm=null;const prev=Object.assign({},S.seek[m]);S.seek[m]={};saveSeek();renderSeek();toast(`${SK_TITLE[m]}을 비웠어요`,"되돌리기",()=>{S.seek[m]=prev;saveSeek();renderSeek()});return}
+  const cell=b.closest("[data-id]"),id=cell&&cell.dataset.id;if(!id)return;
+  if(a==="detail"){openDetail(id);return}
+  const n=S.seek[m][id]||0;
+  if(a==="inc"){setSeek(m,id,n+1);renderSeek();return}
+  if(a==="dec"){setSeek(m,id,n-1);renderSeek();if(n-1<=0){const cd=byId(id);toast(`${cd?cd.name:"카드"}을(를) 뺐어요`,"되돌리기",()=>{setSeek(m,id,n);renderSeek()})}}
+});
+dSeek.addEventListener("close",()=>renderSeek());
+
+/* 이미지 만들기 */
+const TYPE_ART={lovely:["#FFE0EA","#F7AFC7","#E0689A"],cool:["#E0F2FF","#A6D6F5","#3F97D6"],sexy:["#EDE4FF","#C4AEF2","#8E6AD8"],pop:["#FFE9D3","#FFBF8E","#EC8340"],none:["#FFF6F9","#EAD9E0","#B58497"]};
+const RAR_COL={ER:"#C86BE0",PR:"#D0679F",R:"#2F8FDB",N:"#A8939C"};
+function loadImg(src){return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
+function rr(x,ctx,X,Y,W,H,r){ctx.beginPath();ctx.moveTo(X+r,Y);ctx.arcTo(X+W,Y,X+W,Y+H,r);ctx.arcTo(X+W,Y+H,X,Y+H,r);ctx.arcTo(X,Y+H,X,Y,r);ctx.arcTo(X,Y,X+W,Y,r);ctx.closePath()}
+function wrapLines(ctx,text,maxW,maxLines){const out=[];let cur="";
+  for(const ch of String(text)){const t=cur+ch;if(ctx.measureText(t).width>maxW&&cur){out.push(cur);cur=ch.trim()?ch:"";if(out.length===maxLines)break}else cur=t}
+  if(out.length<maxLines&&cur)out.push(cur);
+  else if(out.length===maxLines&&(cur||out.join("").length<String(text).length)){let l=out[maxLines-1];while(l&&ctx.measureText(l+"…").width>maxW)l=l.slice(0,-1);out[maxLines-1]=l+"…"}
+  return out}
+async function makeSeekImage(){
+  const secs=SK_MODES.map(m=>({m,list:seekList(m)})).filter(x=>x.list.length);
+  if(!secs.length){toast("거래할 카드를 먼저 골라 주세요");return}
+  toast("이미지를 만드는 중…");
+  try{await Promise.all(["30px Jua","20px 'Gowun Dodum'"].map(f=>document.fonts.load(f)))}catch(e){}
+  const DISP='"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif',BODY='"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  const W=1080,PAD=48,COLS=4,GAP=24,cw=(W-PAD*2-GAP*(COLS-1))/COLS,ch=Math.round(cw*88/63);
+  const DAN_H=34,NO_H=30,NAME_H=58,CELL_H=DAN_H+ch+NO_H+NAME_H+18,SEC_HEAD=86,SEC_PAD=28;
+  const secH=s=>SEC_HEAD+Math.ceil(s.list.length/COLS)*CELL_H+SEC_PAD;
+  const HEAD=170,FOOT=70;
+  const H=HEAD+secs.reduce((a,s)=>a+secH(s)+28,0)+FOOT;
+  const css=getComputedStyle(document.documentElement),cv0=(k,d)=>(css.getPropertyValue(k)||"").trim()||d;
+  const C={hi:cv0("--cover-hi","#FFF2F6"),cover:cv0("--cover","#FFD1DE"),cover2:cv0("--cover-2","#F5A7C0"),ink:cv0("--cover-ink","#5A2A3C"),soft:cv0("--cover-soft","#8A4A62"),accent:cv0("--accent","#E06A94"),deep:cv0("--pink-deep","#D65E8A"),pink:cv0("--pink","#F5A7C0")};
+  const PILL={w:C.accent,s:"#E8893C",t:"#5B9BD5"};
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+  // 배경
+  x.fillStyle=C.hi;x.fillRect(0,0,W,H);
+  const g=x.createLinearGradient(0,0,W,HEAD);g.addColorStop(0,C.cover);g.addColorStop(1,C.cover2);x.fillStyle=g;x.fillRect(0,0,W,HEAD-24);
+  x.fillStyle=C.ink;x.font=`44px ${DISP}`;x.textBaseline="alphabetic";x.fillText("아이카츠 앙코르 카드 거래",PAD,88);
+  x.fillStyle=C.soft;x.font=`22px ${BODY}`;const d=new Date();
+  x.fillText(`${secs.map(s=>`${SK_TITLE[s.m]} ${s.list.length}종`).join(" · ")}`,PAD,124);
+  x.textAlign="right";x.fillText(`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`,W-PAD,124);x.textAlign="left";
+  const imgs={};await Promise.all(secs.flatMap(s=>s.list).map(async c=>{const src=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"");imgs[c.id]=await loadImg(src)}));
+  let y=HEAD;
+  for(const s of secs){const h=secH(s);
+    x.save();rr(0,x,PAD-20,y,W-(PAD-20)*2,h,28);x.fillStyle="#FFFFFF";x.fill();x.strokeStyle=C.pink;x.globalAlpha=.45;x.lineWidth=2;x.stroke();x.restore();
+    const pillC=PILL[s.m];x.font=`30px ${DISP}`;const tw=x.measureText(SK_TITLE[s.m]).width;
+    rr(0,x,PAD,y+24,tw+44,48,24);x.fillStyle=pillC;x.fill();x.fillStyle="#FFFFFF";x.fillText(SK_TITLE[s.m],PAD+22,y+59);
+    const tot=s.list.reduce((a,c)=>a+(S.seek[s.m][c.id]||0),0);x.fillStyle=C.soft;x.font=`22px ${BODY}`;x.fillText(`${s.list.length}종 · ${tot}장`,PAD+tw+60,y+56);
+    s.list.forEach((c,i)=>{const cx=PAD+(i%COLS)*(cw+GAP),cy=y+SEC_HEAD+Math.floor(i/COLS)*CELL_H;
+      x.textAlign="center";x.font=`22px ${DISP}`;x.fillStyle=C.deep;x.fillText(danOf(c),cx+cw/2,cy+24,cw);x.textAlign="left";
+      const ty=cy+DAN_H;x.save();rr(0,x,cx,ty,cw,ch,12);x.clip();const im=imgs[c.id];
+      if(im){const sc=Math.max(cw/im.width,ch/im.height),iw=im.width*sc,ih=im.height*sc;x.drawImage(im,cx+(cw-iw)/2,ty+(ch-ih)/2,iw,ih)}
+      else{const [a,b,tc]=TYPE_ART[TYPE[c.type]?c.type:"none"];const gg=x.createLinearGradient(cx,ty,cx+cw,ty+ch);gg.addColorStop(0,a);gg.addColorStop(1,b);x.fillStyle=gg;x.fillRect(cx,ty,cw,ch);
+        const sh=SHAPE[c.part];if(sh){const k=cw*.7/64;x.save();x.translate(cx+cw/2-32*k,ty+ch/2-32*k);x.scale(k,k);const p=new Path2D(sh[0]);x.fillStyle="#FFFFFF";x.strokeStyle=tc;x.lineWidth=3.2;x.lineJoin="round";x.stroke(p);x.fill(p,sh[1]);if(sh[3]){x.fillStyle=tc;x.fill(new Path2D(sh[3]))}x.restore()}}
+      x.restore();x.save();rr(0,x,cx,ty,cw,ch,12);x.strokeStyle="rgba(150,60,90,.25)";x.lineWidth=2;x.stroke();x.restore();
+      const n=S.seek[s.m][c.id]||0;if(n>1){x.font=`26px ${DISP}`;const t=`×${n}`,w2=x.measureText(t).width+22;rr(0,x,cx+cw-w2-8,ty+ch-46,w2,38,19);x.fillStyle="#FFFFFF";x.fill();x.strokeStyle=C.pink;x.lineWidth=3;x.stroke();x.fillStyle=C.deep;x.fillText(t,cx+cw-w2+3,ty+ch-18)}
+      x.font=`19px ${BODY}`;x.fillStyle=C.soft;x.textAlign="center";x.fillText(dispNo(c)||"번호 없음",cx+cw/2,ty+ch+26,cw);
+      x.font=`22px ${DISP}`;x.fillStyle=C.ink;wrapLines(x,c.name,cw,2).forEach((l,j)=>x.fillText(l,cx+cw/2,ty+ch+NO_H+24+j*27));x.textAlign="left";
+    });
+    y+=h+28}
+  x.fillStyle=C.soft;x.font=`18px ${BODY}`;x.textAlign="center";x.fillText("아이카츠! 앙코르 비공식 팬 정리 · 카드 이미지의 권리는 반다이 등에 있습니다",W/2,H-32);x.textAlign="left";
+  let blob;try{blob=await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("blob")),"image/png"))}catch(e){toast("이미지를 만들지 못했어요");return}
+  const fn=`거래-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.png`;
+  let dl=null;try{dl=window.claude&&await window.claude.use("downloads")}catch(e){}
+  if(dl){try{await dl.save({filename:fn,data:blob});toast("이미지를 저장했어요")}catch(err){const c=err&&err.code;if(c==="declined")return;toast(c==="rate_limited"?"저장 창이 이미 열려 있어요. 잠시 후 다시 눌러 주세요":"이미지를 저장하지 못했어요")}return}
+  try{const file=new File([blob],fn,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"아이카츠 앙코르 카드 거래"});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast("이미지를 저장했어요");
+}
+
 
 /* ---------- zip 사진 풀기 ---------- */
 let jszipP=null;
