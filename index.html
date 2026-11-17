@@ -1349,7 +1349,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.17-1";
+const APP_VERSION="2026.11.17-2";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1712,11 +1712,16 @@ async function makeSeekImage(){
   const secs=SK_MODES.map(m=>({m,list:seekList(m)})).filter(x=>x.list.length);
   if(!secs.length){toast("거래할 카드를 먼저 골라 주세요");return}
   toast("이미지를 만드는 중…");
-  try{await Promise.all(["30px Jua","20px 'Gowun Dodum'"].map(f=>document.fonts.load(f)))}catch(e){}
+  // 글꼴은 글자 묶음별로 나눠 받기 때문에, 그릴 글자를 모두 미리 받아 둬요 (안 받으면 일부 글자가 다른 글꼴로 깨져 보여요)
+  {const txt=["아이카츠 앙코르 카드 거래 아이카츠! 앙코르 비공식 팬 정리 · 카드 이미지의 권리는 반다이 등에 있습니다 번호 없음 종장×…0123456789.",
+      ...secs.map(s=>SK_TITLE[s.m]),...secs.flatMap(s=>s.list.flatMap(c=>[c.name,dispNo(c),danOf(c)]))].join(" ");
+    const fl=["30px Jua","20px 'Gowun Dodum'"].map(f=>document.fonts.load(f,txt).catch(()=>{}));
+    try{await Promise.race([Promise.all(fl).then(()=>document.fonts.ready),new Promise(r=>setTimeout(r,6000))])}catch(e){}}
   const DISP='"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif',BODY='"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   const W=1080,PAD=48,COLS=4,GAP=24,cw=(W-PAD*2-GAP*(COLS-1))/COLS,ch=Math.round(cw*88/63);
-  const DAN_H=34,NO_H=30,NAME_H=58,CELL_H=DAN_H+ch+NO_H+NAME_H+18,SEC_HEAD=86,SEC_PAD=28;
-  const secH=s=>SEC_HEAD+Math.ceil(s.list.length/COLS)*CELL_H+SEC_PAD;
+  const NO_H=30,NAME_H=58,CELL_H=ch+NO_H+NAME_H+20,SEC_HEAD=86,SEC_PAD=20,GRP_H=52,GRP_GAP=10;
+  secs.forEach(s=>{const gs=[];s.list.forEach(c=>{const k=danOf(c);if(!gs.length||gs[gs.length-1].dan!==k)gs.push({dan:k,list:[]});gs[gs.length-1].list.push(c)});s.groups=gs});
+  const secH=s=>SEC_HEAD+s.groups.reduce((a,g,i)=>a+(i?GRP_GAP:0)+GRP_H+Math.ceil(g.list.length/COLS)*CELL_H,0)+SEC_PAD;
   const HEAD=170,FOOT=70;
   const H=HEAD+secs.reduce((a,s)=>a+secH(s)+28,0)+FOOT;
   const css=getComputedStyle(document.documentElement),cv0=(k,d)=>(css.getPropertyValue(k)||"").trim()||d;
@@ -1737,17 +1742,23 @@ async function makeSeekImage(){
     const pillC=PILL[s.m];x.font=`30px ${DISP}`;const tw=x.measureText(SK_TITLE[s.m]).width;
     rr(0,x,PAD,y+24,tw+44,48,24);x.fillStyle=pillC;x.fill();x.fillStyle="#FFFFFF";x.fillText(SK_TITLE[s.m],PAD+22,y+59);
     const tot=s.list.reduce((a,c)=>a+(S.seek[s.m][c.id]||0),0);x.fillStyle=C.soft;x.font=`22px ${BODY}`;x.fillText(`${s.list.length}종 · ${tot}장`,PAD+tw+60,y+56);
-    s.list.forEach((c,i)=>{const cx=PAD+(i%COLS)*(cw+GAP),cy=y+SEC_HEAD+Math.floor(i/COLS)*CELL_H;
-      x.textAlign="center";x.font=`22px ${DISP}`;x.fillStyle=C.deep;x.fillText(danOf(c),cx+cw/2,cy+24,cw);x.textAlign="left";
-      const ty=cy+DAN_H;x.save();rr(0,x,cx,ty,cw,ch,12);x.clip();const im=imgs[c.id];
+    let gy=y+SEC_HEAD;
+    s.groups.forEach((gr,gi)=>{if(gi)gy+=GRP_GAP;
+      x.font=`26px ${DISP}`;const dw=x.measureText(gr.dan).width;
+      x.fillStyle=C.deep;x.fillRect(PAD,gy+12,6,28);x.fillText(gr.dan,PAD+18,gy+36);
+      x.font=`20px ${BODY}`;x.fillStyle=C.soft;x.fillText(`${gr.list.length}종`,PAD+30+dw,gy+35);
+      x.save();x.strokeStyle=C.pink;x.globalAlpha=.5;x.lineWidth=2;x.beginPath();x.moveTo(PAD+44+dw+x.measureText(`${gr.list.length}종`).width,gy+27);x.lineTo(W-PAD,gy+27);x.stroke();x.restore();
+      const gy0=gy+GRP_H;gy=gy0+Math.ceil(gr.list.length/COLS)*CELL_H;
+    gr.list.forEach((c,i)=>{const cx=PAD+(i%COLS)*(cw+GAP),cy=gy0+Math.floor(i/COLS)*CELL_H;
+      const ty=cy;x.save();rr(0,x,cx,ty,cw,ch,12);x.clip();const im=imgs[c.id];
       if(im){const sc=Math.max(cw/im.width,ch/im.height),iw=im.width*sc,ih=im.height*sc;x.drawImage(im,cx+(cw-iw)/2,ty+(ch-ih)/2,iw,ih)}
       else{const [a,b,tc]=TYPE_ART[TYPE[c.type]?c.type:"none"];const gg=x.createLinearGradient(cx,ty,cx+cw,ty+ch);gg.addColorStop(0,a);gg.addColorStop(1,b);x.fillStyle=gg;x.fillRect(cx,ty,cw,ch);
         const sh=SHAPE[c.part];if(sh){const k=cw*.7/64;x.save();x.translate(cx+cw/2-32*k,ty+ch/2-32*k);x.scale(k,k);const p=new Path2D(sh[0]);x.fillStyle="#FFFFFF";x.strokeStyle=tc;x.lineWidth=3.2;x.lineJoin="round";x.stroke(p);x.fill(p,sh[1]);if(sh[3]){x.fillStyle=tc;x.fill(new Path2D(sh[3]))}x.restore()}}
       x.restore();x.save();rr(0,x,cx,ty,cw,ch,12);x.strokeStyle="rgba(150,60,90,.25)";x.lineWidth=2;x.stroke();x.restore();
       const n=S.seek[s.m][c.id]||0;if(n>1){x.font=`26px ${DISP}`;const t=`×${n}`,w2=x.measureText(t).width+22;rr(0,x,cx+cw-w2-8,ty+ch-46,w2,38,19);x.fillStyle="#FFFFFF";x.fill();x.strokeStyle=C.pink;x.lineWidth=3;x.stroke();x.fillStyle=C.deep;x.fillText(t,cx+cw-w2+3,ty+ch-18)}
-      x.font=`19px ${BODY}`;x.fillStyle=C.soft;x.textAlign="center";x.fillText(dispNo(c)||"번호 없음",cx+cw/2,ty+ch+26,cw);
+      x.font=`19px ${BODY}`;x.fillStyle=C.soft;x.textAlign="center";x.fillText(wrapLines(x,dispNo(c)||"번호 없음",cw,1)[0]||"",cx+cw/2,ty+ch+26);
       x.font=`22px ${DISP}`;x.fillStyle=C.ink;wrapLines(x,c.name,cw,2).forEach((l,j)=>x.fillText(l,cx+cw/2,ty+ch+NO_H+24+j*27));x.textAlign="left";
-    });
+    });});
     y+=h+28}
   x.fillStyle=C.soft;x.font=`18px ${BODY}`;x.textAlign="center";x.fillText("아이카츠! 앙코르 비공식 팬 정리 · 카드 이미지의 권리는 반다이 등에 있습니다",W/2,H-32);x.textAlign="left";
   let blob;try{blob=await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("blob")),"image/png"))}catch(e){toast("이미지를 만들지 못했어요");return}
