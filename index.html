@@ -809,15 +809,18 @@ function byId(id){return S.cards.find(c=>c.id===id)}
 // 파일 이름: 카드 번호 그대로 (패러렐은 번호 뒤 ★, 뒷면은 -뒷면). 확장자는 webp, jpg, png 순서로 찾아요.
 const RP_DIR=IS_SERIES?"series-photos/":"photos/", RP_EXT=["webp","jpg","png"], RP_KEY=NSP+"binder-rp", RP_RETRY=12*3600*1000;
 let RP={};try{RP=JSON.parse(localStorage.getItem(RP_KEY)||"{}")||{}}catch(e){RP={}}
-const rpQ=[],rpBusy=new Set();let rpRun=0,rpT=null,rpSaveT=null;
+const rpQ=[],rpBusy=new Set();let rpRun=0,rpT=null,rpSaveT=null,rpReady=false;
+setTimeout(()=>{rpReady=true;rpPump()},2500);
+function rpHas(url){return fetch(url,{method:"HEAD",cache:"no-cache"}).then(r=>r.ok?true:(r.status===404||r.status===410?false:null)).catch(()=>null)}
 function rpName(c,back){if(!c||!c.no)return "";return String(c.no).normalize("NFC")+(c.star?"★":"")+(back?"-뒷면":"")}
 function rpUrl(c,back){const n=rpName(c,back);if(!n)return "";const v=RP[n];
   if(typeof v==="string"&&RP_EXT.includes(v))return RP_DIR+encodeURIComponent(n)+"."+v;
   if(!(typeof v==="number"&&Date.now()-v<RP_RETRY))rpProbe(n);return ""}
 function rpProbe(n){if(rpBusy.has(n))return;rpBusy.add(n);rpQ.push(n);rpPump()}
-function rpPump(){while(rpRun<6&&rpQ.length){const n=rpQ.shift();rpRun++;
-  (async()=>{let found=0;for(const ext of RP_EXT){const ok=await new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=RP_DIR+encodeURIComponent(n)+"."+ext});if(ok){found=ext;break}}
-    const before=RP[n];RP[n]=found||Date.now();rpBusy.delete(n);rpRun--;
+function rpPump(){if(!rpReady||(typeof cloudDL!=="undefined"&&cloudDL.size)){if(rpQ.length){clearTimeout(rpPump.t);rpPump.t=setTimeout(()=>{rpReady=true;rpPump()},1500)}return}
+  while(rpRun<4&&rpQ.length){const n=rpQ.shift();rpRun++;
+  (async()=>{let found=0,unsure=false;for(const ext of RP_EXT){const ok=await rpHas(RP_DIR+encodeURIComponent(n)+"."+ext);if(ok){found=ext;break}if(ok===null)unsure=true}
+    const before=RP[n];if(found||!unsure)RP[n]=found||Date.now();rpBusy.delete(n);rpRun--;
     clearTimeout(rpSaveT);rpSaveT=setTimeout(()=>{try{localStorage.setItem(RP_KEY,JSON.stringify(RP))}catch(e){}},800);
     if(found&&before!==found){clearTimeout(rpT);rpT=setTimeout(()=>{render();if(dDetail.open&&openId)openDetail(openId)},250)}
     rpPump()})()}}
@@ -1435,7 +1438,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-4";
+const APP_VERSION="2026.11.19-5";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1525,7 +1528,7 @@ async function cloudApplyRemote(R){
     if(rt&&rt!==(Sh.theme||"")){if((canon(S.theme||"")===(Sh.theme||""))||canon(S.theme)===rt){S.theme=R.theme;themeCh=true;changed=true}Sh.theme=rt}
     if(changed){saveLocal();saveLocalPhotos();if(themeCh){savePrefs();applyTheme(S.theme)}render();if(dDetail.open&&openId)openDetail(openId)}
     cloudSave();
-    // 사진 내려받기 (4장씩 동시에, 진행 상황 표시)
+    // 사진 내려받기 (8장씩 동시에, 진행 상황 표시)
     const todo=getPhotos.filter(([k])=>!cloudDL.has(k)); todo.forEach(([k])=>cloudDL.add(k));
     if(todo.length){
       let done=0, ok=0, idx=0; const total=todo.length;
@@ -1534,8 +1537,8 @@ async function cloudApplyRemote(R){
         try{const d=await withTimeout(CLOUD.ref.collection("photos").doc(k).get(),30000);
           if(d.exists&&d.data().src){S.photos[k]=d.data().src;Sh.photos[k]=ver;ok++}}catch(e){}
         cloudDL.delete(k); done++; show();
-        if(done%8===0||done===total){saveLocalPhotos();cloudSave();render();if(dDetail.open&&openId)openDetail(openId)}}};
-      await Promise.all([worker(),worker(),worker(),worker()]);
+        if(done%4===0||done===total){saveLocalPhotos();cloudSave();render();if(dDetail.open&&openId)openDetail(openId)}}};
+      await Promise.all([worker(),worker(),worker(),worker(),worker(),worker(),worker(),worker()]);
       if(total>1)toast(ok===total?`사진 ${ok}장을 모두 받았어요`:`사진 ${ok}장을 받았어요. 나머지 ${total-ok}장은 다음에 다시 받을게요`);
     }
   }finally{cloudApplying--}
