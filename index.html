@@ -1301,7 +1301,7 @@ function openMore(view){moreView=view||null;
     pk.addEventListener("change",()=>setTheme(pk.value));
   } else if(view==="import"){
     body.innerHTML=`<div class="grab"></div><h3>목록 붙여넣기</h3>
-      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 코디가 여러 개면 "/"로 나눠 적어 주세요 (예: 오로라 코디 / 스타 코디). 패러렐 카드는 번호 뒤에 ★를 붙여 주세요 (예: 1-01★). 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
+      <div class="help">스프레드시트에서 줄을 복사해 붙여넣으세요. 칸 순서는<br><code>번호, 이름, 탄, 등급, 타입, 브랜드, 배출처, 부위, 코디, 수량, 메모</code><br>타입, 브랜드, 코디, 수량, 메모는 비워도 돼요. 첫 줄에 칸 이름(머리글)을 적으면 순서가 달라도 칸 이름으로 읽고, "일본어 이름" 칸을 넣으면 일본어 이름에 바로 들어가요. 코디가 여러 개면 "/"로 나눠 적어 주세요 (예: 오로라 코디 / 스타 코디). 패러렐 카드는 번호 뒤에 ★를 붙여 주세요 (예: 1-01★). 처음 보는 브랜드 이름은 자동으로 브랜드 목록에 추가돼요. 번호가 같은 카드가 이미 있으면 새로 만들지 않고 정보만 고쳐요.</div>
       <div class="field"><textarea id="impText" rows="8" placeholder="1-01	스타 리본 탑스	1탄	앙코르 레어	게임기체	상의	스타 리본	1"></textarea></div>
       <p class="muted" id="impInfo" style="margin:8px 0 12px">붙여넣으면 몇 장을 읽었는지 알려 드려요</p>
       <div class="row"><button class="btn" data-act="back">뒤로</button><button class="btn primary grow" id="impGo" disabled>추가하기</button></div>`;
@@ -1310,8 +1310,8 @@ function openMore(view){moreView=view||null;
       $("#impGo").disabled=!r.rows.length; $("#impGo").textContent=r.rows.length?`${r.rows.length}장 추가하기`:"추가하기"});
     setTimeout(()=>ta.focus(),50);
   } else if(view==="export"){
-    const head="번호\t이름\t탄\t등급\t타입\t브랜드\t배출처\t부위\t코디\t수량\t메모";
-    const bs=blockSorter(S.cards),lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||bs(a,b)).map(c=>[dispNo(c),c.name,c.dan,rarsOf(c).map(r=>RAR[r]||r).join(" + "),TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],coordsOf(c).join(" / "),q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
+    const head="번호\t이름\t탄\t등급\t타입\t브랜드\t배출처\t부위\t코디\t수량\t메모\t일본어 이름";
+    const bs=blockSorter(S.cards),lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||bs(a,b)).map(c=>[dispNo(c),c.name,c.dan,rarsOf(c).map(r=>RAR[r]||r).join(" + "),TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],coordsOf(c).join(" / "),q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," "),(c.jname||"").replace(/[\t\r\n]+/g," ")].join("\t"));
     body.innerHTML=`<div class="grab"></div><h3>목록 복사하기</h3>
       <p class="muted" style="margin-bottom:10px">전체 선택해서 복사한 뒤 스프레드시트에 붙여넣으면 백업이 돼요. 다시 붙여넣기로 불러올 수도 있어요.</p>
       <div class="field"><textarea id="expText" rows="9" readonly>${esc([head,...lines].join("\n"))}</textarea></div>
@@ -1374,14 +1374,19 @@ function mapRarity(s){s=norm(s);if(/^(cp|캠페인)/.test(s)&&RAR.CP)return "CP"
 function mapSource(s){s=norm(s);if(/게임|기체|arcade|배출/.test(s))return "arcade";if(/프로모|promo|특전/.test(s))return "promo";return null}
 function mapType(s){s=norm(s);if(/러블리|lovely|큐트|cute/.test(s))return "lovely";if(/쿨|cool/.test(s))return "cool";if(/섹시|sexy/.test(s))return "sexy";if(/팝|pop/.test(s))return "pop";return ""}
 function mapPart(s){s=norm(s);if(/풀코디|풀|full/.test(s))return "full";if(/원피스|one|dress/.test(s))return "dress";if(/상의|탑|top/.test(s))return "top";if(/하의|보텀|바텀|bottom|스커트|팬츠/.test(s))return "bottom";if(/슈즈|신발|shoe/.test(s))return "shoes";if(/악세|액세|헤어|acc/.test(s))return "acc";return null}
+// 첫 줄에 머리글이 있으면 칸 이름으로 읽어요 ("일본어 이름" 칸도 알아봐요). 머리글이 없으면 기본 순서로 읽어요
+const IMP_HEAD={no:/^번호$/,name:/^(이름|카드이름|한국어이름)$/,jname:/^(일본어이름|일본어|jname)$/,dan:/^탄$/,rarity:/^등급$/,type:/^타입$/,brand:/^브랜드$/,source:/^배출처$/,part:/^부위$/,coord:/^코디(이름)?$/,qty:/^수량$/,memo:/^메모$/};
+const IMP_DEF={no:0,name:1,dan:2,rarity:3,type:4,brand:5,source:6,part:7,coord:8,qty:9};
 function parseImport(text){
-  const rows=[],bad=[];
+  const rows=[],bad=[]; let col=null;
   text.split(/\r?\n/).forEach((line,i)=>{
-    if(!line.trim())return; const c=line.includes("\t")?line.split("\t"):line.split(",");
+    if(!line.trim())return; const tab=line.includes("\t"); const c=tab?line.split("\t"):line.split(",");
     const cell=k=>(c[k]||"").trim();
-    if(i===0&&/번호|이름/.test(cell(0)+cell(1)))return;
-    const star=!IS_SERIES&&/★|싸인|패러렐/.test(cell(0));
-    const r={star,no:cell(0).replace(/★|싸인|패러렐/g,"").trim(),name:cell(1),dan:cell(2),rarity:IS_SERIES?(mapRars(cell(3))[0]||null):mapRarity(cell(3)),rars:IS_SERIES?mapRars(cell(3)):null,type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
+    if(i===0&&/번호|이름/.test(cell(0)+cell(1))){const m={};c.forEach((h,j)=>{const n=norm(h);for(const k in IMP_HEAD)if(m[k]==null&&IMP_HEAD[k].test(n))m[k]=j});if(m.no!=null&&m.name!=null)col=m;return}
+    const at=k=>{const m=col||IMP_DEF;return m[k]==null?"":cell(m[k])};
+    const memo=col?at("memo"):c.slice(10).join(tab?" ":",").trim();
+    const star=!IS_SERIES&&/★|싸인|패러렐/.test(at("no"));
+    const r={star,no:at("no").replace(/★|싸인|패러렐/g,"").trim(),name:at("name"),jname:at("jname"),dan:at("dan"),rarity:IS_SERIES?(mapRars(at("rarity"))[0]||null):mapRarity(at("rarity")),rars:IS_SERIES?mapRars(at("rarity")):null,type:mapType(at("type")),brandName:at("brand"),source:mapSource(at("source")),part:mapPart(at("part")),coord:at("coord"),qty:parseInt(at("qty"),10)||0,memo};
     if(!r.name||!r.rarity||!r.source||!r.part){bad.push(i+1);return} rows.push(r);
   });
   return {rows,bad};
@@ -1391,7 +1396,7 @@ function doImport(){
   rows.forEach(r=>{
     r.no=fmtNo(r.no,r.source);
     const ex=r.no?S.cards.find(c=>!!c.star===r.star&&(c.no===r.no||baseNo(c.no)===baseNo(r.no)&&c.source===r.source)):null;
-    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.rars&&r.rars.length>1)data.rars=r.rars; if(r.star)data.star=true; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.coord){const cs=[...new Set(r.coord.split("/").map(x=>x.trim()).filter(Boolean))];if(cs.length){data.coord=cs[0];if(cs.length>1)data.coords=cs}} if(r.memo)data.memo=r.memo;
+    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.rars&&r.rars.length>1)data.rars=r.rars; if(r.star)data.star=true; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.jname)data.jname=r.jname; if(r.coord){const cs=[...new Set(r.coord.split("/").map(x=>x.trim()).filter(Boolean))];if(cs.length){data.coord=cs[0];if(cs.length>1)data.coords=cs}} if(r.memo)data.memo=r.memo;
     let id; if(ex){Object.assign(ex,data);if(!r.star)delete ex.star; if(!r.type)delete ex.type; if(!r.brandName)delete ex.brand; if(!r.coord)delete ex.coord; if(!data.coords)delete ex.coords; if(!data.rars)delete ex.rars; if(!r.memo)delete ex.memo;id=ex.id;updated++} else {id=uid();S.cards.push({id,...data});added++}
     if(r.qty>0)S.qty[id]=Math.min(99,r.qty);
   });
@@ -1512,7 +1517,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-11";
+const APP_VERSION="2026.11.20-1";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
