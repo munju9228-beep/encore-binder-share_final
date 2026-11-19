@@ -334,7 +334,13 @@ dialog.popdlg::backdrop{background:rgba(70,25,45,.5)}
 .mini-card.self .card{box-shadow:0 0 0 2px var(--pink-deep)}
 .memo{background:var(--chip);border-radius:14px;padding:10px 14px;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
 .memo .label{margin-bottom:2px}
-.pageno{text-align:right;font-size:13px;color:var(--ink-soft);margin:6px 18px 0}
+.pageno{text-align:center;font-size:13px;color:var(--ink-soft);margin:0;flex:1}
+.pnav{display:flex;align-items:center;gap:8px;margin:6px 16px 0}
+.pgbtn{flex:0 0 auto;width:34px;height:30px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--pink-deep);font-size:20px;line-height:1;padding:0;cursor:pointer}
+.pgbtn:disabled{opacity:.35}
+.pages.dragging{scroll-snap-type:none;cursor:grabbing;user-select:none}
+.pages.dragging *{pointer-events:none}
+@media (hover:hover) and (pointer:fine){.pages{cursor:grab}}
 
 .pocket{position:relative;border:1px solid var(--pocket-edge);background:var(--pocket);border-radius:9px;padding:6px;display:block;width:100%;text-align:left}
 .pocket::after{content:"";position:absolute;inset:0;border-radius:9px;pointer-events:none;
@@ -831,14 +837,18 @@ setTimeout(()=>{rpReady=true;rpPump()},2500);
 function rpHas(url){return fetch(url,{method:"HEAD",cache:"no-cache"}).then(r=>r.ok?true:(r.status===404||r.status===410?false:null)).catch(()=>null)}
 // GitHub Pages에서 열었을 때는 저장소의 사진 목록을 한 번에 받아서, "사진 한꺼번에 넣기"와 같은 규칙으로 짝을 지어요.
 // (1-01.WEBP, E1-01.webp, 1-01-패러렐.jpg, 1-01★-뒷면.png 처럼 대소문자·E 유무·★/패러렐 모두 인식)
-const RPL_KEY=NSP+"binder-rplist", RPL_TTL=10*60*1000;
+const RPL_KEY=NSP+"binder-rplist", RPL_TTL=20*60*1000;
 let RPL=null;try{RPL=JSON.parse(localStorage.getItem(RPL_KEY)||"null")}catch(e){RPL=null}
 let rpMap=null,rpMapCards=null,rpMapLen=-1,rpMapT=-1,rpListBusy=false,rpListFail=false;
 function rpRepo(){const h=location.hostname;if(!/\.github\.io$/i.test(h))return null;const owner=h.split(".")[0];
   const seg=location.pathname.split("/").filter(Boolean)[0];const repo=seg&&!/\.html?$/i.test(seg)?seg:h;return {owner,repo}}
 async function rpLoadList(force){const r=rpRepo();if(!r||rpListBusy)return;if(!force&&RPL&&Array.isArray(RPL.logos)&&Date.now()-RPL.t<RPL_TTL)return;rpListBusy=true;
-  try{const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/git/trees/HEAD?recursive=1`,{headers:{Accept:"application/vnd.github+json"}});
-    if(res.ok){const d=await res.json();const files=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(RP_DIR)&&/\.(webp|jpe?g|png|gif|avif)$/i.test(x.path)).map(x=>x.path);
+  try{let paths=null;
+    try{const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/git/trees/HEAD?recursive=1`,{headers:{Accept:"application/vnd.github+json"}});
+      if(res.ok){const d=await res.json();paths=(d.tree||[]).filter(x=>x.type==="blob").map(x=>x.path)}}catch(e){}
+    if(!paths)for(const br of ["main","master"]){try{const res=await fetch(`https://data.jsdelivr.com/v1/packages/gh/${r.owner}/${r.repo}@${br}?structure=flat`);
+      if(res.ok){const d=await res.json();paths=(d.files||[]).map(x=>String(x.name||"").replace(/^\//,""));break}}catch(e){}}
+    if(paths){const d={tree:paths.map(path=>({type:"blob",path}))};const files=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(RP_DIR)&&/\.(webp|jpe?g|png|gif|avif)$/i.test(x.path)).map(x=>x.path);
       const logos=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(LG_DIR)&&/\.(webp|jpe?g|png|gif|avif|svg)$/i.test(x.path)).map(x=>x.path);
       const changed=!RPL||JSON.stringify(RPL.files)!==JSON.stringify(files)||JSON.stringify(RPL.logos)!==JSON.stringify(logos);RPL={t:Date.now(),files,logos};lgMap=null;try{localStorage.setItem(RPL_KEY,JSON.stringify(RPL))}catch(e){}
       if(changed){rpMap=null;render();if(dDetail.open&&openId)openDetail(openId)}}
@@ -854,7 +864,8 @@ function rpBuild(){
     if(!look(k)&&mb&&look(mb[1])){k=mb[1];side="-b"}const c=look(k);if(!c)return;const key=c.id+side;if(!m[key]||rank(path)<rank(m[key]))m[key]=path});
   rpMap=m;rpMapCards=S.cards;rpMapLen=S.cards.length;rpMapT=RPL.t;return m}
 // 브랜드 로고: logos 폴더(이전 시리즈는 series-logos)에 브랜드 이름으로 올리면 돼요 (예: 엔젤리 슈가.png)
-const LG_DIR="logos/"; // 앙코르와 이전 시리즈가 같은 로고를 써요let lgMap=null,lgT=-1;
+const LG_DIR="logos/"; // 앙코르와 이전 시리즈가 같은 로고를 써요
+let lgMap=null,lgT=-1;
 function lgKey(x){return String(x||"").normalize("NFC").replace(/\.[^.]+$/,"").toLowerCase().replace(/[\s_\-·.]/g,"")}
 function rpLogo(id){if(!RPL||!Array.isArray(RPL.logos)||!RPL.logos.length)return "";const b=S.brands.find(x=>x.id===id);if(!b)return "";
   if(!lgMap||lgT!==RPL.t){lgMap={};RPL.logos.forEach(path=>{const nm=path.slice(LG_DIR.length);if(nm.includes("/"))return;const k=lgKey(nm);if(!lgMap[k]||/\.png$/i.test(path))lgMap[k]=path});lgT=RPL.t}
@@ -972,7 +983,7 @@ function render(){
         ${Array.from({length:per-pg.length},(_,j)=>editing?`<button class="pocket slot eslot${laySel===pi*per+pg.length+j?" sel":""}" data-layk="${esc(k)}" data-slot="${pi*per+pg.length+j}" aria-label="빈 칸"></button>`:'<div class="pocket slot" aria-hidden="true"></div>').join("")}
       </div></div>`).join("")}
       </div>
-      ${pages.length>1?`<p class="pageno" data-for="${esc(k)}">1 / ${pages.length}쪽 · 옆으로 넘겨 보세요</p>`:""}
+      ${pages.length>1?`<div class="pnav"><button class="pgbtn" data-pg="-1" data-for="${esc(k)}" aria-label="이전 쪽">‹</button><p class="pageno" data-for="${esc(k)}">1 / ${pages.length}쪽 · 옆으로 넘겨 보세요</p><button class="pgbtn" data-pg="1" data-for="${esc(k)}" aria-label="다음 쪽">›</button></div>`:""}
     </section>`;
   });
   if(qn){const nCo=keys.filter(k=>k!=="__nocoord").length;
@@ -992,7 +1003,7 @@ function updatePageNo(p){
   const w=p.firstElementChild.getBoundingClientRect().width+12;
   const i=Math.min(n,Math.round(p.scrollLeft/w)+1);
   const el=[...document.querySelectorAll(".pageno")].find(e=>e.dataset.for===p.dataset.key);
-  if(el)el.textContent=`${i} / ${n}쪽`+(i===1?" · 옆으로 넘겨 보세요":"");
+  if(el){el.textContent=`${i} / ${n}쪽`+(i===1?" · 옆으로 넘겨 보세요":"");const nv=el.parentElement;if(nv&&nv.classList.contains("pnav")){const [a,b]=nv.querySelectorAll(".pgbtn");if(a)a.disabled=i<=1;if(b)b.disabled=i>=n}}
 }
 
 /* ---------- toast ---------- */
@@ -1501,7 +1512,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-9";
+const APP_VERSION="2026.11.19-11";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -2019,6 +2030,26 @@ async function switchNS(){const to=IS_SERIES?"encore":"series";
 $("#nsBtn").addEventListener("click",switchNS);
 (()=>{const h=document.querySelector(".cover h1");if(h)h.textContent=NS_NAME;document.title=NS_NAME;document.body.classList.toggle("ns-series",IS_SERIES);
   const b=$("#nsBtn");if(b){b.textContent=IS_SERIES?"앙코르":"이전 시리즈";b.setAttribute("aria-pressed",IS_SERIES);b.setAttribute("aria-label",IS_SERIES?"앙코르 바인더로 돌아가기":"이전 시리즈 바인더 열기")}})();
+
+/* ---------- PC에서 바인더 넘기기: 화살표 버튼, 마우스로 끌기, Shift+휠 ---------- */
+function pagesOf(k){return [...document.querySelectorAll("#binder .pages")].find(p=>p.dataset.key===k)}
+function turnPage(p,d){if(!p||!p.firstElementChild)return;const w=p.firstElementChild.getBoundingClientRect().width+12;const i=Math.round(p.scrollLeft/w)+d;
+  p.scrollTo({left:Math.max(0,i)*w,behavior:"smooth"})}
+$("#binder").addEventListener("click",e=>{const b=e.target.closest("[data-pg]");if(!b)return;e.stopPropagation();turnPage(pagesOf(b.dataset.for),+b.dataset.pg)},true);
+(()=>{let drag=null,moved=false;
+  $("#binder").addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0)return;const p=e.target.closest(".pages");if(!p||+p.dataset.n<2)return;
+    drag={p,x:e.clientX,left:p.scrollLeft};moved=false});
+  window.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.x;if(!moved&&Math.abs(dx)>6){moved=true;drag.p.classList.add("dragging")}
+    if(moved){drag.p.scrollLeft=drag.left-dx;e.preventDefault()}});
+  window.addEventListener("pointerup",e=>{if(!drag)return;const p=drag.p,dx=e.clientX-drag.x;p.classList.remove("dragging");
+    if(moved){const w=p.firstElementChild.getBoundingClientRect().width+12;const base=Math.round(drag.left/w);const to=Math.abs(dx)>w*.15?base+(dx<0?1:-1):base;
+      p.scrollTo({left:Math.max(0,to)*w,behavior:"smooth"})}drag=null});
+  // 끌기가 끝났을 때 카드가 눌린 것으로 처리되지 않게
+  $("#binder").addEventListener("click",e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
+  // 마우스 휠(세로)로도 옆 페이지로 넘겨요
+  $("#binder").addEventListener("wheel",e=>{const p=e.target.closest(".pages");if(!p||+p.dataset.n<2||e.ctrlKey)return;if(Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
+    if(!e.shiftKey)return;e.preventDefault();turnPage(p,e.deltaY>0?1:-1)},{passive:false});
+})();
 
 /* ---------- zip 사진 풀기 ---------- */
 let jszipP=null;
