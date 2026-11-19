@@ -812,8 +812,36 @@ let RP={};try{RP=JSON.parse(localStorage.getItem(RP_KEY)||"{}")||{}}catch(e){RP=
 const rpQ=[],rpBusy=new Set();let rpRun=0,rpT=null,rpSaveT=null,rpReady=false;
 setTimeout(()=>{rpReady=true;rpPump()},2500);
 function rpHas(url){return fetch(url,{method:"HEAD",cache:"no-cache"}).then(r=>r.ok?true:(r.status===404||r.status===410?false:null)).catch(()=>null)}
+// GitHub Pages에서 열었을 때는 저장소의 사진 목록을 한 번에 받아서, "사진 한꺼번에 넣기"와 같은 규칙으로 짝을 지어요.
+// (1-01.WEBP, E1-01.webp, 1-01-패러렐.jpg, 1-01★-뒷면.png 처럼 대소문자·E 유무·★/패러렐 모두 인식)
+const RPL_KEY=NSP+"binder-rplist", RPL_TTL=10*60*1000;
+let RPL=null;try{RPL=JSON.parse(localStorage.getItem(RPL_KEY)||"null")}catch(e){RPL=null}
+let rpMap=null,rpMapCards=null,rpMapLen=-1,rpMapT=-1,rpListBusy=false,rpListFail=false;
+function rpRepo(){const h=location.hostname;if(!/\.github\.io$/i.test(h))return null;const owner=h.split(".")[0];
+  const seg=location.pathname.split("/").filter(Boolean)[0];const repo=seg&&!/\.html?$/i.test(seg)?seg:h;return {owner,repo}}
+async function rpLoadList(force){const r=rpRepo();if(!r||rpListBusy)return;if(!force&&RPL&&Date.now()-RPL.t<RPL_TTL)return;rpListBusy=true;
+  try{const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/git/trees/HEAD?recursive=1`,{headers:{Accept:"application/vnd.github+json"}});
+    if(res.ok){const d=await res.json();const files=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(RP_DIR)&&/\.(webp|jpe?g|png|gif|avif)$/i.test(x.path)).map(x=>x.path);
+      const changed=!RPL||JSON.stringify(RPL.files)!==JSON.stringify(files);RPL={t:Date.now(),files};try{localStorage.setItem(RPL_KEY,JSON.stringify(RPL))}catch(e){}
+      if(changed){rpMap=null;render();if(dDetail.open&&openId)openDetail(openId)}}
+    else if(!RPL){rpListFail=true;render()}
+  }catch(e){if(!RPL){rpListFail=true;render()}}rpListBusy=false}
+function rpBuild(){
+  if(rpMap&&rpMapCards===S.cards&&rpMapLen===S.cards.length&&rpMapT===RPL.t)return rpMap;
+  const byNo={},byName={},byStar={};
+  S.cards.forEach(c=>{const M=c.star?byStar:byNo;if(c.no){M[fileKey(c.no)]=c;M[fileKey(dispNo(c))]=c;if(!M[fileKey(baseNo(c.no))])M[fileKey(baseNo(c.no))]=c} if(!c.star||!byName[fileKey(c.name)])byName[fileKey(c.name)]=c});
+  const look=k=>{const ms=k.match(/^(.*?)-?(★|싸인|sign|패러렐|parallel|p)$/);if(ms&&byStar[ms[1]])return byStar[ms[1]];return byNo[k]||byName[k]};
+  const m={},rank=p=>/\.webp$/i.test(p)?0:/\.jpe?g$/i.test(p)?1:2;
+  RPL.files.forEach(path=>{const name=path.slice(RP_DIR.length);if(name.includes("/"))return;let k=fileKey(name),side="";const mb=k.match(/^(.*?)-?(뒷면|뒷장|후면|뒤|back|b)$/);
+    if(!look(k)&&mb&&look(mb[1])){k=mb[1];side="-b"}const c=look(k);if(!c)return;const key=c.id+side;if(!m[key]||rank(path)<rank(m[key]))m[key]=path});
+  rpMap=m;rpMapCards=S.cards;rpMapLen=S.cards.length;rpMapT=RPL.t;return m}
+function rpPath(p){return p.split("/").map(encodeURIComponent).join("/")}
+setTimeout(()=>rpLoadList(),1200);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")rpLoadList()});
+
 function rpName(c,back){if(!c||!c.no)return "";return String(c.no).normalize("NFC")+(c.star?"★":"")+(back?"-뒷면":"")}
-function rpUrl(c,back){const n=rpName(c,back);if(!n)return "";const v=RP[n];
+function rpUrl(c,back){if(rpRepo()&&!rpListFail){if(!RPL||!Array.isArray(RPL.files))return "";const m=rpBuild(),pth=m[c.id+(back?"-b":"")];return pth?rpPath(pth):""}
+  const n=rpName(c,back);if(!n)return "";const v=RP[n];
   if(typeof v==="string"&&RP_EXT.includes(v))return RP_DIR+encodeURIComponent(n)+"."+v;
   if(!(typeof v==="number"&&Date.now()-v<RP_RETRY))rpProbe(n);return ""}
 function rpProbe(n){if(rpBusy.has(n))return;rpBusy.add(n);rpQ.push(n);rpPump()}
@@ -1438,7 +1466,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-5";
+const APP_VERSION="2026.11.19-6";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
