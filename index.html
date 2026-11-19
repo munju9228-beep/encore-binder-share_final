@@ -682,7 +682,8 @@ function cleanQty(){const o={};for(const k in S.qty){if(S.qty[k]>0)o[k]=S.qty[k]
 
 /* ---------- photo store (IndexedDB) ---------- */
 let idbP=null;
-function idb(){if(idbP)return idbP;idbP=new Promise((res,rej)=>{const r=indexedDB.open("encore-binder"+(IS_SERIES?"-series":""),1);
+const IDB_NAME="encore-binder"+(IS_SERIES?"-series":"");
+function idb(){if(idbP)return idbP;idbP=new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);
   r.onupgradeneeded=()=>r.result.createObjectStore("photos");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return idbP}
 function idbRun(fn){return idb().then(db=>new Promise((res,rej)=>{const tx=db.transaction("photos","readwrite");fn(tx.objectStore("photos"));
   tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}))}
@@ -1324,7 +1325,8 @@ function openMore(view){moreView=view||null;
         <button class="arropt" role="radio" data-arr="coord" aria-checked="${S.arrange==="coord"}"><b>코디별</b><small>번호순을 지키되, 같은 코디(상의·하의·슈즈·악세사리)가 두 페이지로 나뉠 것 같으면 남은 칸을 비우고 다음 페이지에서 시작해요. 여러 코디에 쓰이는 카드는 번호가 이어지는 코디 쪽에 넣어요</small></button>
         <button class="arropt" role="radio" data-arr="custom" aria-checked="${S.arrange==="custom"}"><b>본인 설정</b><small>카드 자리를 직접 정해요. 바인더의 탄 이름 옆 "자리 바꾸기"를 누르고, 카드 두 개를 차례로 누르면 자리가 바뀌어요. 처음에는 코디별 배열에서 시작해요</small></button>
       </div>
-      <p class="muted" style="font-size:12px;margin-top:10px">코디 이름으로 검색할 때는 정리 방식과 상관없이 검색 결과만 모아 보여요.</p>`;
+      <p class="muted" style="font-size:12px;margin-top:10px">코디 이름으로 검색할 때는 정리 방식과 상관없이 검색 결과만 모아 보여요.</p>
+      ${IS_SERIES?seriesCleanHTML():""}`;
   } else {
     body.innerHTML=`<div class="grab"></div><h3>더보기</h3>${moreTabs()}<div class="menu">
       <button class="btn" data-act="theme"><span class="menu-sw" style="background:${esc(S.theme)}"></span>테마 색 바꾸기<small>연분홍 대신 바인더의 메인 색을 골라요. 하얀색 포인트는 그대로예요</small></button>
@@ -1346,6 +1348,7 @@ function openMore(view){moreView=view||null;
 }
 $("#moreBody").addEventListener("click",async e=>{
   const a=e.target.closest("[data-act]"); if(e.target.id==="impGo")return doImport();
+  if(a&&/^sclean-/.test(a.dataset.act||"")){seriesClean(a.dataset.act);return}
   const mt=e.target.closest("[data-mt]");if(mt){S.moreTab=mt.dataset.mt;openMore();return}
   const ar=e.target.closest("[data-arr]");if(ar){setArrange(ar.dataset.arr);openMore();toast(`바인더 정리 방식: ${ARR_LABEL[ar.dataset.arr]}`);return}
   if(!a)return; const act=a.dataset.act;
@@ -1517,7 +1520,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.20-1";
+const APP_VERSION="2026.11.20-2";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -2055,6 +2058,41 @@ $("#binder").addEventListener("click",e=>{const b=e.target.closest("[data-pg]");
   $("#binder").addEventListener("wheel",e=>{const p=e.target.closest(".pages");if(!p||+p.dataset.n<2||e.ctrlKey)return;if(Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
     if(!e.shiftKey)return;e.preventDefault();turnPage(p,e.deltaY>0?1:-1)},{passive:false});
 })();
+
+/* ---------- 이전 시리즈 바인더 비우기 (휴대폰 저장 공간 확보) ---------- */
+let scArm=null,scUsage="";
+function seriesCleanHTML(){
+  if(!scUsage&&navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{scUsage=`이 사이트가 휴대폰에서 쓰는 공간: 약 ${fmtSize(e.usage||0)}`;const el=$("#scUsage");if(el)el.textContent=scUsage}).catch(()=>{});
+  const nPh=Object.keys(S.photos).filter(k=>!k.startsWith("logo-")).length;
+  const b=(act,label,warn)=>`<button class="btn${act==="sclean-all"?" danger":""}" style="width:100%;margin-top:8px" data-act="${act}">${scArm===act?warn:label}</button>`;
+  return `<p class="set-h">이전 시리즈 바인더 비우기</p>
+    <p class="muted" id="scUsage" style="font-size:12.5px;margin:0 2px 6px">${scUsage||"사용 공간 확인 중…"}</p>
+    <p class="muted" style="font-size:12.5px;margin:0 2px 4px">이 휴대폰에 저장된 이전 시리즈 기록만 지워요. 앙코르 바인더와 브랜드·로고는 그대로예요. 실수 방지를 위해 두 번 눌러야 지워져요.</p>
+    ${b("sclean-photos",`직접 넣은 사진 지우기 (${nPh}장)`,"한 번 더 누르면 사진을 지워요")}
+    ${b("sclean-cache","GitHub 사진 저장본 지우기","한 번 더 누르면 저장본을 지워요")}
+    ${b("sclean-all","이전 시리즈 전부 지우기 (카드·수량·사진·설정)","정말 전부 지울까요? 한 번 더 누르세요")}
+    <p class="muted" style="font-size:12px;margin:6px 2px 0">GitHub 사진 저장본은 지워도 볼 때 다시 받아 와요. 백업 코드에 올라간 기록은 지워지지 않아요.</p>`}
+function fmtSize(b){return b>=1073741824?(b/1073741824).toFixed(1)+"GB":b>=1048576?Math.round(b/1048576)+"MB":Math.max(1,Math.round(b/1024))+"KB"}
+async function clearSeriesPhotos(){const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction("photos","readwrite");tx.objectStore("photos").clear();tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+  for(const k of Object.keys(S.photos))if(!k.startsWith("logo-"))delete S.photos[k];savedPhotos=Object.assign({},S.photos)}
+async function clearSeriesPhotoCache(){let n=0;try{for(const key of await caches.keys()){if(!/photos$/.test(key))continue;const c=await caches.open(key);for(const rq of await c.keys())if(/\/series-photos\//.test(rq.url)){await c.delete(rq);n++}}}catch(e){}
+  for(const u in rpRot){if(rpRot[u])URL.revokeObjectURL(rpRot[u]);delete rpRot[u]}return n}
+async function seriesClean(act){
+  if(!IS_SERIES)return;
+  if(scArm!==act){scArm=act;openMore();setTimeout(()=>{if(scArm===act){scArm=null;if(dMore.open&&S.moreTab==="set")openMore()}},4000);return}
+  scArm=null;
+  try{
+    if(act==="sclean-photos"){toast("사진을 지우는 중…");await clearSeriesPhotos();render();toast("직접 넣은 사진을 지웠어요")}
+    else if(act==="sclean-cache"){const n=await clearSeriesPhotoCache();toast(`GitHub 사진 저장본 ${n}장을 지웠어요`)}
+    else if(act==="sclean-all"){toast("이전 시리즈를 비우는 중…");
+      try{await clearSeriesPhotos()}catch(e){}
+      await clearSeriesPhotoCache();
+      try{if(idbP){const db=await idbP;db.close()}}catch(e){}
+      const name=IDB_NAME;await new Promise(r=>{try{const q=indexedDB.deleteDatabase(name);q.onsuccess=q.onerror=q.onblocked=()=>r()}catch(e){r()}});
+      const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("series-"))ks.push(k)}ks.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+      toast("이전 시리즈를 비웠어요. 다시 여는 중…");setTimeout(()=>location.reload(),600);return}
+  }catch(e){toast("지우지 못했어요. 어플을 껐다 켠 뒤 다시 해 주세요")}
+  scUsage="";if(dMore.open)openMore()}
 
 /* ---------- zip 사진 풀기 ---------- */
 let jszipP=null;
