@@ -68,6 +68,11 @@ button{cursor:pointer}
 .ribbon span{display:block;height:100%;width:0;border-radius:10px;
   background:#fff;transition:width .4s ease}
 .cover .sub{margin:0;color:var(--cover-soft);font-size:14px}
+.sub-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sub-line .sub{flex:1;min-width:0}
+.tradebtn{flex:0 0 auto;position:relative;z-index:2;border:0;border-radius:999px;padding:7px 18px;font-family:var(--display);font-size:15px;line-height:1.1;color:var(--cover-ink);
+  background:color-mix(in srgb,var(--cover-2) 55%,var(--cover));box-shadow:inset 0 2px 4px rgba(90,30,55,.22),inset 0 -1px 0 rgba(255,255,255,.55)}
+.tradebtn[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:inset 0 3px 6px rgba(70,10,35,.35),inset 0 -1px 0 rgba(255,255,255,.25)}
 
 /* controls */
 .controls{padding:16px 16px 4px;display:grid;gap:10px}
@@ -218,7 +223,7 @@ button{cursor:pointer}
 .cstatus{font-size:13px;color:var(--ink-soft);margin:8px 2px 0}
 .codein{display:flex;gap:8px}
 .codein input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-size:16px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
-.toptabs{display:grid;grid-template-columns:1.12fr 1.12fr .8fr .8fr;gap:6px;margin-bottom:8px}
+.toptabs{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:6px;margin-bottom:8px}
 .toptabs button{white-space:nowrap}
 .toptabs button{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:9px 6px;font-size:15px;color:var(--ink-soft)}
 .toptabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
@@ -439,6 +444,37 @@ textarea{resize:vertical}
 .help code{font-family:inherit;font-weight:700}
 .fgroup{margin-bottom:14px}
 .menu{display:grid;gap:8px;margin-top:12px}
+.moretabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 4px}
+.moretabs button{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:9px 6px;font-size:15px;color:var(--ink-soft)}
+.moretabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.set-h{font-family:var(--display);font-size:17px;margin:14px 2px 8px}
+.arrlist{display:grid;gap:8px}
+.arropt{display:grid;grid-template-columns:22px 1fr;column-gap:10px;row-gap:2px;align-items:start;text-align:left;border:1.5px solid var(--line);background:var(--paper);border-radius:14px;padding:12px;color:var(--ink)}
+.arropt::before{content:"";grid-row:1 / span 2;width:18px;height:18px;margin-top:2px;border-radius:50%;border:2px solid var(--pocket-edge);background:var(--paper);box-sizing:border-box}
+.arropt[aria-checked="true"]{border-color:var(--accent);background:var(--chip)}
+.arropt[aria-checked="true"]::before{border:5px solid var(--accent)}
+.arropt b{font-size:15px}
+.arropt small{font-size:12.5px;color:var(--ink-soft);line-height:1.45}
+.layedit-btn{margin-left:4px;border:1px solid var(--line);background:var(--chip);color:var(--pink-deep);border-radius:999px;padding:4px 10px;font-size:12.5px;white-space:nowrap}
+.layedit{margin:0 16px 8px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--paper)}
+.layedit p{margin:0 0 8px;font-size:13px;color:var(--ink-soft)}
+.layacts{display:flex;flex-wrap:wrap;gap:6px}
+.layacts .chip:disabled{opacity:.45}
+.layacts .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pages.editing .pocket.sel{outline:3px solid var(--accent);outline-offset:1px}
+.pages.editing .pocket.eslot{border-style:dashed;cursor:pointer}
+.pages.editing .pocket.eslot.sel{background:var(--chip)}
+.qrbtn{margin-left:auto;flex:0 0 auto;height:40px;min-width:44px;padding:0 10px;border-radius:20px;border:1.5px solid var(--line);background:var(--paper);font-family:var(--display);font-size:15px;color:var(--ink-soft)}
+.qrbtn.on{background:var(--chip);border-color:var(--accent);color:var(--pink-deep)}
+.qrbtn + .heart{margin-left:8px}
+.qr-name{margin:0 0 6px}
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:10px 0 0}
+.qr-img{width:min(260px,80%);border-radius:12px;border:1px solid var(--line);background:#fff}
+.qr-up{min-width:200px}
+.qr-up:disabled{opacity:.5}
+.qr-note{margin:-4px 0 0;font-size:12.5px;color:var(--ink-soft)}
+.qr-warn{margin:0;padding:12px 14px;border-radius:12px;background:var(--chip);font-size:13px;line-height:1.6;color:var(--ink)}
+.qr-warn b{color:#D23A5E}
 .menu .btn{text-align:left}
 .menu .btn small{display:block;color:var(--ink-soft);font-size:13px}
 
@@ -452,12 +488,12 @@ textarea{resize:vertical}
     <h1>아이카츠 앙코르</h1>
     <p class="prog-line"><span class="big" id="progBig">0 / 0장</span><small id="progPct"></small></p>
     <div class="ribbon"><span id="progBar"></span></div>
-    <p class="sub" id="progSub">카드를 추가하면 수집 현황이 여기 보여요</p>
+    <div class="sub-line"><p class="sub" id="progSub">카드를 추가하면 수집 현황이 여기 보여요</p><button type="button" class="tradebtn" id="tradeBtn" aria-pressed="false">거래</button></div>
   </header>
 
   <nav class="controls" aria-label="보기 설정">
     <div>
-      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="coord" role="tab">코디네이트</button><button data-tab="seek" role="tab">거래</button><button data-tab="info" role="tab">정보</button></div>
+      <div class="toptabs" id="topTabs" role="tablist"><button data-tab="binder" role="tab">바인더 정리</button><button data-tab="coord" role="tab">코디네이트</button><button data-tab="info" role="tab">정보</button></div>
       <div class="search bctl">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L20.5 20.5"/></svg>
         <input id="searchIn" type="search" list="coordSug" placeholder="코디 이름으로 검색" autocomplete="off" aria-label="코디 검색">
@@ -515,9 +551,11 @@ textarea{resize:vertical}
 <dialog class="sheet" id="dSeek"><div class="body" id="seekBody"></div></dialog>
 <dialog class="sheet" id="dOutfit"><div class="body" id="outfitBody"></div></dialog>
 <dialog class="popdlg" id="dPop" aria-label="새 소식"><div id="popBody"></div></dialog>
+<dialog class="sheet" id="dQr"><div class="body" id="qrBody"></div></dialog>
 <dialog class="sheet" id="dMore"><div class="body" id="moreBody"></div></dialog>
 
 <input type="file" id="photoInput" accept="image/*" hidden>
+<input type="file" id="qrInput" accept="image/*" hidden>
 <input type="file" id="logoInput" accept="image/*" hidden>
 <input type="file" id="logoBulkInput" accept="image/*" multiple hidden>
 <input type="file" id="restoreInput" accept=".json,application/json" hidden>
@@ -577,7 +615,7 @@ const SHAPE = {
 function iconSVG(part,type){const sh=SHAPE[part];if(!sh)return "";const [d,r,,deco]=sh;
   return `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="outline" d="${d}" fill-rule="${r}"/><path class="body" d="${d}" fill-rule="${r}"/>${deco?`<path class="deco" d="${deco}"/>`:""}</svg>`}
 
-const S = {seek:{w:{},s:{},t:{}},outfits:[],oLayout:"4x1",oWant:false,info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
+const S = {arrange:"default",lay:{},moreTab:"menu",seek:{w:{},s:{},t:{}},outfits:[],oLayout:"4x1",oWant:false,info:[],tab:"binder",want:{},navOrder:[],theme:THEME_DEFAULT,search:"",cards:[],qty:{},photos:{},brands:[],cols:2,groupBy:"dan",own:"all",f:{want:[],sign:[],dan:[],rarity:[],type:[],brand:[],source:[],part:[]},quick:false,loading:true,
   last:{dan:"",rarity:"N",type:"lovely",source:"arcade",part:"top"}};
 let backend = {kind:"none"}, assets = null;
 
@@ -589,9 +627,9 @@ function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")
 function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,infoCat:S.infoCat||"all",oLayout:S.oLayout,oWant:!!S.oWant,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.seek=normSeek(d.seek);S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.seek=normSeek(d.seek);S.lay=normLay(d.layout);if(d.layout&&ARR_LABEL[d.layout.mode])S.arrange=d.layout.mode;S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,seek:S.seek,qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
+function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,seek:S.seek,layout:layData(),qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -777,6 +815,7 @@ function renderInfo(){
   document.body.classList.toggle("info-mode",S.tab==="info");
   document.body.classList.toggle("seek-mode",S.tab==="seek");
   document.querySelectorAll("#topTabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
+  {const tb=$("#tradeBtn");if(tb)tb.setAttribute("aria-pressed",S.tab==="seek")}
   if(S.tab!=="info"){v.innerHTML="";return}
   const allI=S.info||[], ic=S.infoCat||"all", list=ic==="all"?allI:allI.filter(x=>infoCatOf(x)===ic);
   v.innerHTML=`${false?'<button class="btn primary addinfo" data-ia="add">+ 정보 추가</button>':""}
@@ -826,13 +865,16 @@ function render(){
     const all=groups[k].slice().sort(qn?((a,b)=>starFirst(a,b)||PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||cmp(a.no||a.name,b.no||b.name)):blockSorter(groups[k]));
     const vis=all.filter(passOwn); if(!vis.length)return; shown+=vis.length; vis.forEach(c=>nav.push(c.id));
     const h=all.filter(c=>q(c.id)>0).length, color=!qn&&S.groupBy==="type"?({lovely:"#F08DB2",cool:"#6FB6E6",sexy:"#A98AE6",pop:"#F4A06A"}[k]||"#D7B8C4"):TAB_COLORS[i%TAB_COLORS.length];
-    const pages=[];const per=S.cols*S.cols;for(let p=0;p<vis.length;p+=per)pages.push(vis.slice(p,p+per));
+    const per=S.cols*S.cols, arr=qn?{slots:vis}:arrangeSlots(k,all,vis), editing=!qn&&S.arrange==="custom"&&layEdit===k;
+    if(arr.slots!==vis){nav.splice(nav.length-vis.length,vis.length,...arr.slots.filter(Boolean).map(c=>c.id))}
+    const pages=[];for(let p=0;p<arr.slots.length;p+=per)pages.push(arr.slots.slice(p,p+per)); if(!pages.length)pages.push([]);
     html+=`<section class="section" style="--tabc:${color}">
-      <div class="tab">${!qn&&S.groupBy==="brand"&&logoOf(k)?`<img class="tlogo" src="${esc(logoOf(k))}" alt="">`:""}<h2>${esc(label(gd,k))}</h2><span class="count">${h}/${all.length}</span><span class="mini"><i style="width:${Math.round(h/all.length*100)}%"></i></span></div>
-      <div class="pages" data-key="${esc(k)}" data-n="${pages.length}">
-      ${pages.map(pg=>`<div class="page"><div class="grid">
-        ${pg.map(c=>`<button class="pocket ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}${c.star?", 패러렐 카드":""}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
-        ${Array.from({length:per-pg.length},()=>'<div class="pocket slot" aria-hidden="true"></div>').join("")}
+      <div class="tab">${!qn&&S.groupBy==="brand"&&logoOf(k)?`<img class="tlogo" src="${esc(logoOf(k))}" alt="">`:""}<h2>${esc(label(gd,k))}</h2><span class="count">${h}/${all.length}</span><span class="mini"><i style="width:${Math.round(h/all.length*100)}%"></i></span>${!qn&&S.arrange==="custom"&&!editing?`<button class="layedit-btn" data-layk="${esc(k)}" data-lay="start">자리 바꾸기</button>`:""}</div>
+      ${editing?layEditBar(k):""}
+      <div class="pages${editing?" editing":""}" data-key="${esc(k)}" data-n="${pages.length}">
+      ${pages.map((pg,pi)=>`<div class="page"><div class="grid">
+        ${pg.map((c,ci)=>!c?(editing?`<button class="pocket slot eslot${laySel===pi*per+ci?" sel":""}" data-layk="${esc(k)}" data-slot="${pi*per+ci}" aria-label="빈 칸"></button>`:'<div class="pocket slot" aria-hidden="true"></div>'):`<button ${editing?`data-layk="${esc(k)}" data-slot="${pi*per+ci}" `:""}class="pocket${editing&&laySel===pi*per+ci?" sel":""} ty-${TYPE[c.type]?c.type:"none"}${c.rarity==="ER"&&q(c.id)>0?" er-have":""}" data-id="${esc(c.id)}" aria-label="${esc(c.name)}${c.star?", 패러렐 카드":""}, ${esc(RAR[c.rarity]||"")}, ${esc(label("type",c.type))}, ${q(c.id)}장">${cardHTML(c)}</button>`).join("")}
+        ${Array.from({length:per-pg.length},(_,j)=>editing?`<button class="pocket slot eslot${laySel===pi*per+pg.length+j?" sel":""}" data-layk="${esc(k)}" data-slot="${pi*per+pg.length+j}" aria-label="빈 칸"></button>`:'<div class="pocket slot" aria-hidden="true"></div>').join("")}
       </div></div>`).join("")}
       </div>
       ${pages.length>1?`<p class="pageno" data-for="${esc(k)}">1 / ${pages.length}쪽 · 옆으로 넘겨 보세요</p>`:""}
@@ -843,7 +885,7 @@ function render(){
   if(!shown){html=`<div class="empty"><h2>${S.own==="need"?"조건에 맞는 카드를 모두 모았어요":"조건에 맞는 카드가 없어요"}</h2>
     <p>필터나 보기 조건을 바꿔 보세요.</p><button class="btn" data-act="clear">조건 모두 지우기</button></div>`}
   if(S.readOnly)html=`<div class="notice">지금 이 계정은 보기 권한만 있어서 수량, 카드 정보, 사진이 저장되지 않아요. 바인더 주인 계정에서 이 계정을 편집자로 초대해 주세요.</div>`+html;
-  S.navOrder=nav;
+  S.navOrder=nav; S.secAll={}; keys.forEach(k=>{S.secAll[k]=groups[k]});
   binder.innerHTML=html;
   binder.querySelectorAll(".pages").forEach(p=>{
     if(scrolls[p.dataset.key])p.scrollLeft=scrolls[p.dataset.key];
@@ -887,7 +929,7 @@ function openDetail(id){
         <figcaption><span>뒷면</span><span class="side-acts">${backSrc?'<button data-act="photo" data-side="b">바꾸기</button><button data-act="photodel" data-side="b">지우기</button>':""}</span></figcaption></figure>
     </div>
     <div class="detail-top">
-      <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span><span class="dname-text"><span class="kname">${esc(c.name)}</span>${c.jname?`<span class="jname" lang="ja">${esc(c.jname)}</span>`:""}</span><button class="heart" data-act="want" aria-pressed="${!!S.want[c.id]}" aria-label="원해요">${S.want[c.id]?"♥":"♡"}</button></h3><p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
+      <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span><span class="dname-text"><span class="kname">${esc(c.name)}</span>${c.jname?`<span class="jname" lang="ja">${esc(c.jname)}</span>`:""}</span><button class="qrbtn${S.photos[c.id+"-qr"]?" on":""}" data-act="qr" aria-label="QR 사진${S.photos[c.id+"-qr"]?" (등록됨)":""}">QR</button><button class="heart" data-act="want" aria-pressed="${!!S.want[c.id]}" aria-label="원해요">${S.want[c.id]?"♥":"♡"}</button></h3><p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
       <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 패러렐</span>':""}<span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
     </div>
     ${c.amemo?`<div class="memo"><p class="label">메모</p>${esc(c.amemo)}</div>`:""}${c.memo?`<div class="memo mine"><p class="label">내 메모</p>${esc(c.memo)}</div>`:""}
@@ -914,12 +956,13 @@ $("#detailBody").addEventListener("click",e=>{
     if(a.dataset.side==="b"){removePhotoDoc(c.id+"-b").then(()=>{openDetail(c.id);toast("뒷면 사진을 지웠어요")});return}
     const old=c.photo;delete c.photo;if(old&&assets)assets.delete(old).catch(()=>{});
     removePhotoDoc(c.id).then(()=>{scheduleSave("cat");render();openDetail(c.id);toast("앞면 사진을 지웠어요")})}
+  if(a.dataset.act==="qr"){openQr(c.id);return}
   if(a.dataset.act==="edit"){dDetail.close();openForm(c.id)}
   if(a.dataset.act==="del"){
     if(!armDelete){armDelete=true;openDetail(c.id);return}
     armDelete=false; S.cards=S.cards.filter(x=>x.id!==c.id); delete S.qty[c.id]; delete S.want[c.id];
     scheduleSave("cat"); scheduleSave("own"); dDetail.close(); render(); toast(`"${c.name}" 카드를 지웠어요`);
-    if(c.photo&&assets)assets.delete(c.photo).catch(()=>{}); removePhotoDoc(c.id); removePhotoDoc(c.id+"-b");
+    if(c.photo&&assets)assets.delete(c.photo).catch(()=>{}); removePhotoDoc(c.id); removePhotoDoc(c.id+"-b"); removePhotoDoc(c.id+"-qr");
   }
 });
 /* ---------- zoom viewer ---------- */
@@ -1107,6 +1150,8 @@ $("#filterBody").addEventListener("click",e=>{
 const dMore=$("#dMore");
 let moreView=null;
 function setTheme(c){S.theme=c;savePrefs();applyTheme(c);render();scheduleSave("set");openMore("theme");toast("테마 색을 바꿨어요")}
+function layData(){return {mode:S.arrange,lay:Object.entries(S.lay).map(([k,ids])=>({k,ids}))}}
+function moreTabs(){return `<div class="seg moretabs" role="tablist"><button role="tab" data-mt="menu" aria-selected="${S.moreTab!=="set"}">메뉴</button><button role="tab" data-mt="set" aria-selected="${S.moreTab==="set"}">설정</button></div>`}
 function openMore(view){moreView=view||null;
   const body=$("#moreBody");
   if(view==="cloud"){
@@ -1164,8 +1209,17 @@ function openMore(view){moreView=view||null;
       <p class="muted" style="margin-bottom:10px">전체 선택해서 복사한 뒤 스프레드시트에 붙여넣으면 백업이 돼요. 다시 붙여넣기로 불러올 수도 있어요.</p>
       <div class="field"><textarea id="expText" rows="9" readonly>${esc([head,...lines].join("\n"))}</textarea></div>
       <div class="row" style="margin-top:12px"><button class="btn" data-act="back">뒤로</button><button class="btn primary grow" data-act="copy">복사하기</button></div>`;
+  } else if(S.moreTab==="set"){
+    body.innerHTML=`<div class="grab"></div><h3>더보기</h3>${moreTabs()}
+      <p class="set-h">바인더 정리 방식</p>
+      <div class="arrlist" role="radiogroup" aria-label="바인더 정리 방식">
+        <button class="arropt" role="radio" data-arr="default" aria-checked="${S.arrange==="default"}"><b>기본</b><small>번호와 코디 순서대로 빈 칸 없이 채워요</small></button>
+        <button class="arropt" role="radio" data-arr="coord" aria-checked="${S.arrange==="coord"}"><b>코디별</b><small>번호순을 지키되, 같은 코디(상의·하의·슈즈·악세사리)가 두 페이지로 나뉠 것 같으면 남은 칸을 비우고 다음 페이지에서 시작해요. 여러 코디에 쓰이는 카드는 번호가 이어지는 코디 쪽에 넣어요</small></button>
+        <button class="arropt" role="radio" data-arr="custom" aria-checked="${S.arrange==="custom"}"><b>본인 설정</b><small>카드 자리를 직접 정해요. 바인더의 탄 이름 옆 "자리 바꾸기"를 누르고, 카드 두 개를 차례로 누르면 자리가 바뀌어요. 처음에는 코디별 배열에서 시작해요</small></button>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:10px">코디 이름으로 검색할 때는 정리 방식과 상관없이 검색 결과만 모아 보여요.</p>`;
   } else {
-    body.innerHTML=`<div class="grab"></div><h3>더보기</h3><div class="menu">
+    body.innerHTML=`<div class="grab"></div><h3>더보기</h3>${moreTabs()}<div class="menu">
       <button class="btn" data-act="theme"><span class="menu-sw" style="background:${esc(S.theme)}"></span>테마 색 바꾸기<small>연분홍 대신 바인더의 메인 색을 골라요. 하얀색 포인트는 그대로예요</small></button>
       <button class="btn" data-act="brands">브랜드 관리<small>브랜드 이름과 로고를 등록하고 고쳐요</small></button>
       <button class="btn" data-act="bulk">사진 한꺼번에 넣기<small>파일 이름을 카드 번호로 맞추면 알아서 짝지어 넣어요. 사진을 묶은 zip 파일도 고를 수 있어요. 패러렐 카드는 번호 뒤에 ★, 뒷면은 -뒷면을 붙여 주세요 (예: E1-01.webp, E1-01-뒷면.webp. E를 빼고 1-01.webp로 적어도 돼요)</small></button>
@@ -1185,6 +1239,8 @@ function openMore(view){moreView=view||null;
 }
 $("#moreBody").addEventListener("click",async e=>{
   const a=e.target.closest("[data-act]"); if(e.target.id==="impGo")return doImport();
+  const mt=e.target.closest("[data-mt]");if(mt){S.moreTab=mt.dataset.mt;openMore();return}
+  const ar=e.target.closest("[data-arr]");if(ar){setArrange(ar.dataset.arr);openMore();toast(`바인더 정리 방식: ${ARR_LABEL[ar.dataset.arr]}`);return}
   if(!a)return; const act=a.dataset.act;
   if(act==="import"||act==="export"||act==="theme")openMore(act);
   if(act==="sw"){setTheme(a.dataset.c);return}
@@ -1349,7 +1405,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.17-2";
+const APP_VERSION="2026.11.19-2";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1369,8 +1425,9 @@ function pver(s){s=String(s||"");let h=0;for(let i=0;i<s.length;i+=53)h=(h*31+s.
 function cloudLoad(){try{const d=JSON.parse(localStorage.getItem(CK)||"null");if(d&&d.code){CLOUD.code=d.code;CLOUD.shadow=d.shadow||null;CLOUD.last=d.last||0;CLOUD.repairVer=d.repairVer||""}}catch(e){}}
 function cloudSave(){try{localStorage.setItem(CK,JSON.stringify({code:CLOUD.code,shadow:CLOUD.shadow,last:CLOUD.last,repairVer:CLOUD.repairVer||""}))}catch(e){}}
 function localState(){
-  const st={cards:{},qty:{},want:{},brands:{},outfits:{},seekW:{},seekS:{},seekT:{},theme:S.theme||"",photos:{}};
+  const st={cards:{},qty:{},want:{},brands:{},outfits:{},seekW:{},seekS:{},seekT:{},lay:{},theme:S.theme||"",photos:{}};
   [["w","seekW"],["s","seekS"],["t","seekT"]].forEach(([m,n])=>{const mp=(S.seek&&S.seek[m])||{};for(const k in mp)if(mp[k]>0)st[n][k]=canon(mp[k])});
+  for(const k in (S.lay||{}))st.lay[k]=canon(S.lay[k]); if(S.arrange&&S.arrange!=="default")st.lay.__mode=canon(S.arrange);
   (S.outfits||[]).forEach(o=>{if(o&&o.id)st.outfits[o.id]=canon(o)});
   S.cards.forEach(c=>{if(c&&c.id){const o=Object.assign({},c);delete o.photo;st.cards[c.id]=canon(o)}});
   const q=cleanQty();for(const k in q)st.qty[k]=canon(q[k]);
@@ -1428,6 +1485,7 @@ async function cloudApplyRemote(R){
     sec("qty",R.qty,(k,v)=>{if(v)S.qty[k]=v;else delete S.qty[k]});
     sec("want",R.want,(k,v)=>{if(v)S.want[k]=true;else delete S.want[k]});
     [["w","seekW"],["s","seekS"],["t","seekT"]].forEach(([m,n])=>sec(n,R[n],(k,v)=>{S.seek=S.seek||{w:{},s:{},t:{}};S.seek[m]=S.seek[m]||{};const x=Math.floor(+v);if(x>0)S.seek[m][k]=Math.min(x,99);else delete S.seek[m][k]}));
+    sec("lay",R.lay,(k,v)=>{if(k==="__mode"){S.arrange=ARR_LABEL[v]?v:"default";return}if(Array.isArray(v))S.lay[k]=v.map(x=>typeof x==="string"?x:"");else delete S.lay[k]});
     sec("outfits",R.outfits,(k,v)=>{S.outfits=(S.outfits||[]).filter(o=>o.id!==k);if(v!==undefined)S.outfits.push(Object.assign({},v,{id:k}))});
   sec("brands",R.brands,(k,v)=>{const i=S.brands.findIndex(b=>b.id===k);if(v===undefined){if(i>=0)S.brands.splice(i,1)}else{const o=Object.assign({},v,{id:k});if(i>=0)S.brands[i]=o;else S.brands.push(o)}});
     sec("photos",R.photoIdx,()=>{});
@@ -1460,7 +1518,7 @@ async function cloudPush(){
   try{
     const Sh=CLOUD.shadow, L=localState(), FP=firebase.firestore.FieldPath, DEL=firebase.firestore.FieldValue.delete();
     const args=[], after=[];
-    ["cards","qty","want","brands","outfits","seekW","seekS","seekT"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
+    ["cards","qty","want","brands","outfits","seekW","seekS","seekT","lay"].forEach(name=>{const keys=new Set([...Object.keys(L[name]),...Object.keys(Sh[name]||{})]);
       keys.forEach(k=>{const l=L[name][k]||"",sh=(Sh[name]||{})[k]||"";if(l===sh)return;
         args.push(new FP(name,k),l?JSON.parse(l):DEL);after.push([name,k,l])})});
     if((L.theme?canon(L.theme):"")!==(Sh.theme||"")&&L.theme){args.push(new FP("theme"),L.theme);after.push(["theme",null,canon(L.theme)])}
@@ -1507,7 +1565,7 @@ async function cloudJoin(raw,mode){
   CLOUD.code=code; CLOUD.ref=ref; CLOUD.status="on";
   if(mode==="merge"){CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}}}
   else{ // 코드 기록으로 바꾸기
-    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};S.outfits=[];S.seek={w:{},s:{},t:{}};
+    S.cards=[];S.qty={};S.want={};S.brands=[];S.photos={};S.outfits=[];S.seek={w:{},s:{},t:{}};S.lay={};S.arrange="default";
     CLOUD.shadow={cards:{},qty:{},want:{},brands:{},theme:canon(S.theme||""),photos:{}};
   }
   toast("백업 코드 기록을 불러오는 중이에요");
@@ -1525,7 +1583,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)cloudSched
 /* ---------- backup ---------- */
 let pendingRestore=null;
 async function saveBackup(){
-  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),outfits:S.outfits,seek:S.seek,brands:S.brands,photos:S.bkPhotos?S.photos:{}};
+  const data={app:"aikatsu-encore-binder",v:3,savedAt:new Date().toISOString(),theme:S.theme,cards:S.cards,qty:cleanQty(),want:cleanWant(),outfits:S.outfits,seek:S.seek,layout:layData(),brands:S.brands,photos:S.bkPhotos?S.photos:{}};
   const d=new Date(),stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
   const name=`aikatsu-encore-backup-${stamp}.json`;
   const file=new File([JSON.stringify(data)],name,{type:"application/json"});
@@ -1537,12 +1595,12 @@ async function saveBackup(){
 $("#restoreInput").addEventListener("change",async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.cards))throw 0;
-    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},outfits:Array.isArray(d.outfits)?d.outfits:[],seek:normSeek(d.seek),brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
+    pendingRestore={cards:d.cards.map(normCard),qty:d.qty||{},want:d.want||{},outfits:Array.isArray(d.outfits)?d.outfits:[],seek:normSeek(d.seek),layout:d.layout||null,brands:Array.isArray(d.brands)?d.brands:[],photos:d.photos||{},theme:d.theme,savedAt:d.savedAt};openMore("restore");}
   catch(err){toast("이 파일은 아이카츠 앙코르 백업 파일이 아니에요")}
 });
 async function doRestore(){
   const b=pendingRestore;if(!b)return;
-  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.outfits=b.outfits||[];S.seek=b.seek||{w:{},s:{},t:{}};S.brands=b.brands;S.photos=Object.assign({},b.photos);
+  S.cards=b.cards;S.qty=b.qty;S.want=b.want||{};S.outfits=b.outfits||[];S.seek=b.seek||{w:{},s:{},t:{}};if(b.layout){S.lay=normLay(b.layout);S.arrange=ARR_LABEL[b.layout.mode]?b.layout.mode:"default"}S.brands=b.brands;S.photos=Object.assign({},b.photos);
   if(b.theme){S.theme=b.theme;savePrefs();applyTheme(S.theme)}
   saveLocal();saveLocalPhotos();pendingRestore=null;
   dMore.close();render();toast(`카드 ${S.cards.length}장을 불러왔어요`);
@@ -1701,7 +1759,7 @@ dSeek.addEventListener("close",()=>renderSeek());
 /* 이미지 만들기 */
 const TYPE_ART={lovely:["#FFE0EA","#F7AFC7","#E0689A"],cool:["#E0F2FF","#A6D6F5","#3F97D6"],sexy:["#EDE4FF","#C4AEF2","#8E6AD8"],pop:["#FFE9D3","#FFBF8E","#EC8340"],none:["#FFF6F9","#EAD9E0","#B58497"]};
 const RAR_COL={ER:"#C86BE0",PR:"#D0679F",R:"#2F8FDB",N:"#A8939C"};
-function loadImg(src){return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
+function loadSrcImg(src){return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
 function rr(x,ctx,X,Y,W,H,r){ctx.beginPath();ctx.moveTo(X+r,Y);ctx.arcTo(X+W,Y,X+W,Y+H,r);ctx.arcTo(X+W,Y+H,X,Y+H,r);ctx.arcTo(X,Y+H,X,Y,r);ctx.arcTo(X,Y,X+W,Y,r);ctx.closePath()}
 function wrapLines(ctx,text,maxW,maxLines){const out=[];let cur="";
   for(const ch of String(text)){const t=cur+ch;if(ctx.measureText(t).width>maxW&&cur){out.push(cur);cur=ch.trim()?ch:"";if(out.length===maxLines)break}else cur=t}
@@ -1735,7 +1793,7 @@ async function makeSeekImage(){
   x.fillStyle=C.soft;x.font=`22px ${BODY}`;const d=new Date();
   x.fillText(`${secs.map(s=>`${SK_TITLE[s.m]} ${s.list.length}종`).join(" · ")}`,PAD,124);
   x.textAlign="right";x.fillText(`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`,W-PAD,124);x.textAlign="left";
-  const imgs={};await Promise.all(secs.flatMap(s=>s.list).map(async c=>{const src=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"");imgs[c.id]=await loadImg(src)}));
+  const imgs={};await Promise.all(secs.flatMap(s=>s.list).map(async c=>{const src=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"");imgs[c.id]=await loadSrcImg(src)}));
   let y=HEAD;
   for(const s of secs){const h=secH(s);
     x.save();rr(0,x,PAD-20,y,W-(PAD-20)*2,h,28);x.fillStyle="#FFFFFF";x.fill();x.strokeStyle=C.pink;x.globalAlpha=.45;x.lineWidth=2;x.stroke();x.restore();
@@ -1769,6 +1827,85 @@ async function makeSeekImage(){
   const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast("이미지를 저장했어요");
 }
 
+
+/* ---------- 바인더 정리 방식 (기본 / 코디별 / 본인 설정) ---------- */
+const ARR_LABEL={default:"기본",coord:"코디별",custom:"본인 설정"};
+let layEdit=null, laySel=-1;
+function layKey(k){return S.groupBy+":"+k}
+function normLay(d){const o={};if(d&&Array.isArray(d.lay))d.lay.forEach(x=>{if(x&&typeof x.k==="string"&&Array.isArray(x.ids))o[x.k]=x.ids.map(v=>typeof v==="string"?v:"")});return o}
+function saveLay(){saveLocal()}
+// 번호순 (패러렐은 원래 카드 바로 뒤)
+function numSort(list){return list.slice().sort((a,b)=>cmp(a.no||"￿"+a.name,b.no||"￿"+b.name)||(a.star?1:0)-(b.star?1:0)||cmp(a.name,b.name))}
+// 코디별: 번호순을 지키면서, 같은 코디가 이어지는 묶음이 페이지 사이에 나뉘면 남은 칸을 비우고 다음 페이지에서 시작
+function coordSlots(list,per){
+  const L=numSort(list), mem={};
+  L.forEach((c,i)=>coordsOf(c).forEach(k=>(mem[k]=mem[k]||[]).push(i)));
+  const asg=L.map((c,i)=>{const cs=coordsOf(c);if(!cs.length)return null;if(cs.length===1)return cs[0];
+    let best=cs[0],bd=Infinity;cs.forEach(k=>{const d=mem[k].reduce((m,j)=>j===i?m:Math.min(m,Math.abs(j-i)),Infinity);if(d<bd){bd=d;best=k}});return best});
+  const runs=[];L.forEach((c,i)=>{const a=asg[i]||"__no:"+(c.no||c.id),last=runs[runs.length-1];if(last&&last.k===a)last.cs.push(c);else runs.push({k:a,cs:[c]})});
+  // 같은 코디 안에서는 패러렐(★) 묶음을 먼저, 그다음 기본 카드 묶음. 둘은 따로 페이지를 맞춰요
+  // 풀코디는 패러렐과 기본 카드를 한 묶음으로 붙여서 같은 페이지에 보여요
+  const blocks=[];runs.forEach(r=>{const fu=r.cs.filter(c=>c.part==="full"),rest=r.cs.filter(c=>c.part!=="full");
+    if(fu.length)blocks.push({k:r.k+"#full",cs:fu.filter(c=>c.star).concat(fu.filter(c=>!c.star))});
+    const st=rest.filter(c=>c.star),nm=rest.filter(c=>!c.star);if(st.length)blocks.push({k:r.k+"★",cs:st});if(nm.length)blocks.push({k:r.k,cs:nm})});
+  const out=[];blocks.forEach(b=>{const used=out.length%per,rem=per-used;if(used&&b.cs.length<=per&&b.cs.length>rem)for(let r=0;r<rem;r++)out.push(null);b.cs.forEach(c=>out.push(c))});
+  return out}
+// 본인 설정: 저장된 자리 (없으면 코디별로 시작). 새 카드는 뒤에 번호순으로 붙어요
+function customIds(k,all){const per=S.cols*S.cols,ids=new Set(all.map(c=>c.id)),saved=S.lay[layKey(k)];
+  let L=Array.isArray(saved)?saved.filter(x=>x===""||ids.has(x)):coordSlots(all,per).map(c=>c?c.id:"");
+  const seen=new Set();L=L.filter(x=>x===""||(!seen.has(x)&&seen.add(x)));
+  numSort(all).forEach(c=>{if(!seen.has(c.id))L.push(c.id)});
+  while(L.length&&L[L.length-1]==="")L.pop();return L}
+function arrangeSlots(k,all,vis){const per=S.cols*S.cols;
+  if(S.arrange==="coord")return {slots:coordSlots(vis,per)};
+  if(S.arrange==="custom"){const L=customIds(k,all),editing=layEdit===k,ok=new Set((editing?all:vis).map(c=>c.id));
+    let slots=L.map(id=>id&&ok.has(id)?byId(id):null);
+    if(editing){const need=Math.ceil((slots.length+1)/per)*per;while(slots.length<need)slots.push(null)}
+    else{const pg=[];for(let p=0;p<slots.length;p+=per){const ch=slots.slice(p,p+per);if(ch.some(Boolean))pg.push(...ch)}slots=pg;while(slots.length&&!slots[slots.length-1])slots.pop()}
+    return {slots,ids:L}}
+  return {slots:vis}}
+function layEditBar(k){return `<div class="layedit"><p>${laySel<0?"옮길 카드를 누른 뒤, 들어갈 자리를 누르세요. 두 자리가 서로 바뀌어요.":"이제 들어갈 자리를 누르세요. 같은 카드를 다시 누르면 선택이 풀려요."}</p>
+  <div class="layacts"><button class="chip" data-lay="blank" ${laySel<0?"disabled":""}>선택한 자리 앞에 빈 칸</button><button class="chip" data-lay="unblank" ${laySel<0?"disabled":""}>선택한 빈 칸 지우기</button><button class="chip" data-lay="reset">코디별로 되돌리기</button><button class="chip on" data-lay="done">완료</button></div></div>`}
+function layAction(act,k,all){
+  if(act==="start"){layEdit=k;laySel=-1;S.lay[layKey(k)]=customIds(k,all);saveLay();render();return}
+  if(act==="done"){layEdit=null;laySel=-1;render();toast("자리를 저장했어요");return}
+  const key=layKey(k),L=customIds(k,all);
+  if(act==="reset"){delete S.lay[key];S.lay[key]=customIds(k,all);laySel=-1;saveLay();render();toast("코디별 배열로 되돌렸어요");return}
+  if(act==="blank"&&laySel>=0){while(L.length<laySel)L.push("");L.splice(laySel,0,"");laySel=-1;S.lay[key]=L;saveLay();render();return}
+  if(act==="unblank"&&laySel>=0){if(L[laySel]===""||laySel>=L.length){if(laySel<L.length)L.splice(laySel,1);S.lay[key]=L;laySel=-1;saveLay();render()}else toast("빈 칸을 골라야 지울 수 있어요");return}
+}
+function layTap(k,all,i){
+  if(laySel<0){laySel=i;render();return}
+  if(laySel===i){laySel=-1;render();return}
+  const key=layKey(k),L=customIds(k,all);const n=Math.max(i,laySel)+1;while(L.length<n)L.push("");
+  [L[laySel],L[i]]=[L[i],L[laySel]];while(L.length&&L[L.length-1]==="")L.pop();
+  S.lay[key]=L;laySel=-1;saveLay();render()}
+function setArrange(m){if(!ARR_LABEL[m])return;S.arrange=m;layEdit=null;laySel=-1;saveLay();render()}
+
+/* ---------- QR 사진 ---------- */
+const dQr=$("#dQr"); let qrId=null;
+function openQr(id){const c=byId(id);if(!c)return;qrId=id;const src=S.photos[id+"-qr"]||"",have=q(id)>0;
+  $("#qrBody").innerHTML=`<div class="grab"></div><h3>QR 사진</h3><p class="muted qr-name">${esc(c.no?dispNo(c)+" ":"")}${esc(c.name)}</p>
+    <div class="qr-wrap">${src?`<img class="qr-img" src="${esc(src)}" alt="${esc(c.name)} QR 사진">`:""}
+      <button class="btn primary qr-up" data-qa="up" ${have?"":"disabled"}>${src?"QR 사진 바꾸기":"QR 사진 올리기"}</button>
+      ${have?"":'<p class="qr-note">가지고 있는 장수가 0장이라 QR 사진을 올릴 수 없어요.</p>'}
+      <p class="qr-warn">실물로 보유중인 QR 사진만 추가해주세요.<br>불법 (코드 공유 등) 등 소지하지 않는 카드의 QR은 등록하지 말아주세요.<br><b>적발시 사이트 폐쇄조치 진행합니다.</b></p>
+      ${src?'<button class="linkbtn" data-qa="del">QR 사진 지우기</button>':""}
+    </div>
+    <button class="btn" style="width:100%;margin-top:14px" data-qa="close">닫기</button>`;
+  if(!dQr.open)dQr.showModal()}
+$("#qrBody").addEventListener("click",async e=>{const b=e.target.closest("[data-qa]");if(!b)return;const a=b.dataset.qa,c=byId(qrId);if(!c)return;
+  if(a==="close"){dQr.close();return}
+  if(a==="up"){if(q(c.id)>0)$("#qrInput").click();return}
+  if(a==="del"){await removePhotoDoc(c.id+"-qr");openQr(c.id);if(openId===c.id)openDetail(c.id);toast("QR 사진을 지웠어요")}});
+$("#qrInput").addEventListener("change",async e=>{const file=e.target.files[0];e.target.value="";const c=byId(qrId);if(!file||!c)return;
+  if(q(c.id)<=0){toast("가지고 있는 카드만 QR 사진을 올릴 수 있어요");return}
+  toast("QR 사진을 넣는 중이에요");
+  try{const img=await loadImg(file);const src=encodeDataURL(img,false);
+    if(backend.kind==="db")await backend.db.doc("photos/"+c.id+"-qr").set({src});
+    S.photos[c.id+"-qr"]=src;if(backend.kind!=="db")saveLocalPhotos();
+    openQr(c.id);if(openId===c.id)openDetail(c.id);toast("QR 사진을 넣었어요")}catch(err){toast(photoErr(err))}});
+dQr.addEventListener("close",()=>{qrId=null});
 
 /* ---------- zip 사진 풀기 ---------- */
 let jszipP=null;
@@ -1830,6 +1967,8 @@ $("#searchIn").addEventListener("input",e=>{clearTimeout(searchT);searchT=setTim
 $("#searchIn").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";S.search="";render()}});
 $("#colSeg").addEventListener("click",e=>{const b=e.target.closest("[data-n]");if(!b)return;S.cols=+b.dataset.n;savePrefs();render()});
 $("#topTabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;S.tab=b.dataset.tab;savePrefs();render();window.scrollTo({top:0})});
+let tabBeforeTrade="binder";
+$("#tradeBtn").addEventListener("click",()=>{if(S.tab==="seek")S.tab=tabBeforeTrade||"binder";else{tabBeforeTrade=S.tab;S.tab="seek"}savePrefs();render();window.scrollTo({top:0})});
 $("#groupSeg").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(!b)return;S.groupBy=b.dataset.g;savePrefs();render()});
 $("#ownRow").addEventListener("click",e=>{const b=e.target.closest("[data-own]");if(b){S.own=b.dataset.own;savePrefs();render()}});
 $("#filterBtn").addEventListener("click",openFilter);
@@ -1837,6 +1976,9 @@ $("#addBtn").addEventListener("click",()=>openForm(null));
 $("#moreBtn").addEventListener("click",()=>openMore());
 $("#quickBtn").addEventListener("click",()=>{S.quick=!S.quick;$("#quickBtn").setAttribute("aria-pressed",S.quick);$("#quickHint").hidden=!S.quick});
 $("#binder").addEventListener("click",e=>{
+  const ly=e.target.closest("[data-layk]");
+  if(ly){const k=ly.dataset.layk,all=(S.secAll||{})[k]||[];if(ly.dataset.lay){layAction(ly.dataset.lay,k,all);return}if(ly.dataset.slot!=null){layTap(k,all,+ly.dataset.slot);return}}
+  const la=e.target.closest(".layedit [data-lay]");if(la&&layEdit!=null){layAction(la.dataset.lay,layEdit,(S.secAll||{})[layEdit]||[]);return}
   const a=e.target.closest("[data-act]");
   if(a){if(a.dataset.act==="add")openForm(null);if(a.dataset.act==="import")openMore("import");
     if(a.dataset.act==="clear"){DIMS.forEach(d=>S.f[d]=[]);S.f.sign=[];S.f.want=[];S.own="all";S.search="";$("#searchIn").value="";savePrefs();render()}
