@@ -70,6 +70,8 @@ button{cursor:pointer}
 .cover .sub{margin:0;color:var(--cover-soft);font-size:14px}
 .sub-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sub-line .sub{flex:1;min-width:0}
+.nsbtns{display:flex;gap:6px;flex:0 0 auto;position:relative;z-index:2}
+.ns-series .cover h1::after{content:"이전 시리즈";margin-left:8px;vertical-align:middle;font-family:var(--body);font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--cover-ink)}
 .tradebtn{flex:0 0 auto;position:relative;z-index:2;border:0;border-radius:999px;padding:7px 18px;font-family:var(--display);font-size:15px;line-height:1.1;color:var(--cover-ink);
   background:color-mix(in srgb,var(--cover-2) 55%,var(--cover));box-shadow:inset 0 2px 4px rgba(90,30,55,.22),inset 0 -1px 0 rgba(255,255,255,.55)}
 .tradebtn[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:inset 0 3px 6px rgba(70,10,35,.35),inset 0 -1px 0 rgba(255,255,255,.25)}
@@ -367,6 +369,8 @@ dialog.popdlg::backdrop{background:rgba(70,25,45,.5)}
 .r-PR{background:linear-gradient(135deg,#E8679A,#B774E8)}
 .r-R{background:#2F8FDB}
 .r-N{background:#A8939C}
+.r-CP{background:linear-gradient(135deg,#F2A93B,#E5577C)}
+.r-SR{background:linear-gradient(135deg,#7A6CF0,#3FB6D9)}
 .qty{position:absolute;bottom:34px;left:6px;background:var(--badge-bg);color:var(--pink-deep);border:2px solid var(--pink);font-family:var(--display);font-size:14px;line-height:1;padding:4px 8px 3px;border-radius:10px;box-shadow:0 1px 3px rgba(150,60,90,.25)}
 .card.holo.have{box-shadow:0 0 0 2px #fff,0 0 0 4px transparent}
 .pocket.er-have{background:conic-gradient(from 210deg,#FF8CC6,#FFD27A,#8FE3FF,#C9A2FF,#FF8CC6)}
@@ -488,7 +492,7 @@ textarea{resize:vertical}
     <h1>아이카츠 앙코르</h1>
     <p class="prog-line"><span class="big" id="progBig">0 / 0장</span><small id="progPct"></small></p>
     <div class="ribbon"><span id="progBar"></span></div>
-    <div class="sub-line"><p class="sub" id="progSub">카드를 추가하면 수집 현황이 여기 보여요</p><button type="button" class="tradebtn" id="tradeBtn" aria-pressed="false">거래</button></div>
+    <div class="sub-line"><p class="sub" id="progSub">카드를 추가하면 수집 현황이 여기 보여요</p><span class="nsbtns"><button type="button" class="tradebtn" id="nsBtn" aria-pressed="false">이전 시리즈</button><button type="button" class="tradebtn" id="tradeBtn" aria-pressed="false">거래</button></span></div>
   </header>
 
   <nav class="controls" aria-label="보기 설정">
@@ -564,8 +568,15 @@ textarea{resize:vertical}
 <script>
 (function(){
 "use strict";
+/* ---------- 바인더 종류 (앙코르 / 이전 시리즈) ---------- */
+const NS_KEY="binder-ns";
+const NS=(()=>{const h=(location.hash||"").replace("#","");if(h==="series"||h==="encore")return h;try{return localStorage.getItem(NS_KEY)==="series"?"series":"encore"}catch(e){return "encore"}})();
+const IS_SERIES=NS==="series", NSP=IS_SERIES?"series-":"";
+const NS_NAME=IS_SERIES?"아이카츠 시리즈":"아이카츠 앙코르";
 const RAR = {ER:"ER 앙코르 레어",PR:"PR 프리미엄 레어",R:"R 레어",N:"N 노멀"};
 const RAR_ORDER = ["ER","PR","R","N"];
+// 이전 시리즈는 등급 구성이 달라요
+if(IS_SERIES){delete RAR.ER;Object.assign(RAR,{CP:"CP",SR:"SR"});RAR_ORDER.splice(0,RAR_ORDER.length,"CP","SR","PR","R","N")}
 const SRC = {arcade:"게임기체",promo:"프로모션"};
 const SRC_ORDER = ["arcade","promo"];
 const PART = {top:"상의",bottom:"하의",dress:"원피스",full:"풀코디",shoes:"슈즈",acc:"헤어 악세사리"};
@@ -620,16 +631,16 @@ const S = {arrange:"default",lay:{},moreTab:"menu",seek:{w:{},s:{},t:{}},outfits
 let backend = {kind:"none"}, assets = null;
 
 /* ---------- prefs (per-viewer convenience) ---------- */
-function loadPrefs(){try{const p=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(p){
+function loadPrefs(){if(IS_SERIES){try{const b=JSON.parse(localStorage.getItem("binder-prefs")||"null");if(b&&b.theme)S.theme=b.theme}catch(e){}}try{const p=JSON.parse(localStorage.getItem(NSP+"binder-prefs")||"null");if(p){
   if(p.theme)S.theme=p.theme; if(typeof p.bkPhotos==="boolean")S.bkPhotos=p.bkPhotos;
   if(["info","binder","coord","seek"].includes(p.tab))S.tab=p.tab; if(["all","official","app"].includes(p.infoCat))S.infoCat=p.infoCat; if(p.oLayout==="2x2"||p.oLayout==="4x1")S.oLayout=p.oLayout; S.oWant=!!p.oWant; if(DIMS.includes(p.groupBy))S.groupBy=p.groupBy; if([2,3,4].includes(p.cols))S.cols=p.cols; if(["all","have","need"].includes(p.own))S.own=p.own;
   if(p.f)DIMS.concat(["sign","want"]).forEach(d=>{if(Array.isArray(p.f[d]))S.f[d]=p.f[d]}); S.f.sign=S.f.sign.filter(v=>v==="star"); if(p.last)Object.assign(S.last,p.last);}}catch(e){}}
-function savePrefs(){try{localStorage.setItem("binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,infoCat:S.infoCat||"all",oLayout:S.oLayout,oWant:!!S.oWant,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
+function savePrefs(){try{localStorage.setItem(NSP+"binder-prefs",JSON.stringify({bkPhotos:!!S.bkPhotos,theme:S.theme,cols:S.cols,tab:S.tab,infoCat:S.infoCat||"all",oLayout:S.oLayout,oWant:!!S.oWant,groupBy:S.groupBy,own:S.own,f:S.f,last:S.last}))}catch(e){}if(typeof cloudSchedule==="function")cloudSchedule()}
 
 /* ---------- storage ---------- */
-function loadLocal(){try{const d=JSON.parse(localStorage.getItem("binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.seek=normSeek(d.seek);S.lay=normLay(d.layout);if(d.layout&&ARR_LABEL[d.layout.mode])S.arrange=d.layout.mode;S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(NSP+"binder-data")||"null");if(d){S.cards=(d.cards||[]).map(normCard);S.info=Array.isArray(d.info)?d.info:[];S.outfits=Array.isArray(d.outfits)?d.outfits:[];S.seek=normSeek(d.seek);S.lay=normLay(d.layout);if(d.layout&&ARR_LABEL[d.layout.mode])S.arrange=d.layout.mode;S.qty=d.qty||{};S.want=d.want||{};S.brands=d.brands||[];S.seedVer=d.seedVer||0;S.syncIds=d.syncIds||null;S.syncStamp=d.syncStamp||"";S.syncVer=d.syncVer||""}}catch(e){}
 }
-function saveLocal(){try{localStorage.setItem("binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,seek:S.seek,layout:layData(),qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
+function saveLocal(){try{localStorage.setItem(NSP+"binder-data",JSON.stringify({cards:S.cards,info:S.info,outfits:S.outfits,seek:S.seek,layout:layData(),qty:S.qty,want:cleanWant(),brands:S.brands,seedVer:S.seedVer||0,syncIds:S.syncIds||null,syncStamp:S.syncStamp||"",syncVer:S.syncVer||""}))}catch(e){toast("이 기기에 저장하지 못했어요")}if(typeof cloudSchedule==="function")cloudSchedule()}
 const timers={cat:null,own:null,brand:null,set:null}, inflight={cat:false,own:false,brand:false,set:false}, again={cat:false,own:false,brand:false,set:false};
 function isPending(w){return !!timers[w]||inflight[w]}
 function scheduleSave(w){
@@ -655,7 +666,7 @@ function cleanQty(){const o={};for(const k in S.qty){if(S.qty[k]>0)o[k]=S.qty[k]
 
 /* ---------- photo store (IndexedDB) ---------- */
 let idbP=null;
-function idb(){if(idbP)return idbP;idbP=new Promise((res,rej)=>{const r=indexedDB.open("encore-binder",1);
+function idb(){if(idbP)return idbP;idbP=new Promise((res,rej)=>{const r=indexedDB.open("encore-binder"+(IS_SERIES?"-series":""),1);
   r.onupgradeneeded=()=>r.result.createObjectStore("photos");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return idbP}
 function idbRun(fn){return idb().then(db=>new Promise((res,rej)=>{const tx=db.transaction("photos","readwrite");fn(tx.objectStore("photos"));
   tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}))}
@@ -685,8 +696,8 @@ function migrateMemos(){
   });
   if(ch)saveLocal();
 }
-function seedDefaults(){
-  let has=false;try{has=!!localStorage.getItem("binder-data")}catch(e){}
+function seedDefaults(){if(IS_SERIES)return false;
+  let has=false;try{has=!!localStorage.getItem(NSP+"binder-data")}catch(e){}
   const D=DEFAULT_DATA;
   if(!has){S.cards=JSON.parse(JSON.stringify(D.cards)).map(normCard);S.cards.forEach(c=>{if(c.memo){c.amemo=c.memo;delete c.memo}});S.brands=JSON.parse(JSON.stringify(D.brands));S.qty=Object.assign({},D.qty||{});S.seedVer=D.ver;S.syncIds=D.cards.map(c=>c.id);saveLocal();return}
   if((S.seedVer||0)>=D.ver)return;
@@ -714,7 +725,7 @@ function markLocal(c,k){if(!Array.isArray(S.syncIds)||!S.syncIds.includes(c.id))
 const IS_SHARE=false;
 async function syncFromFile(){
   let D;
-  try{const r=await fetch("./binder.json?t="+Date.now(),{cache:"no-cache"});if(!r.ok)return;D=await r.json()}catch(e){return}
+  try{const r=await fetch("./"+(IS_SERIES?"series":"binder")+".json",{cache:"no-cache"});if(!r.ok)return;D=await r.json()}catch(e){return}
   if(!D||D.app!=="aikatsu-encore-binder"||!Array.isArray(D.cards)||!D.cards.length)return;
   const stamp=String(D.savedAt||"");
   if(stamp&&stamp===S.syncStamp&&S.syncVer===APP_VERSION)return;
@@ -771,8 +782,8 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const q=id=>S.qty[id]||0;
 const cmp=(a,b)=>String(a).localeCompare(String(b),"ko",{numeric:true});
 const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-function fmtNo(no,source){const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
-function baseNo(no){return String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"")}
+function fmtNo(no,source){if(IS_SERIES)return String(no||"").trim().replace(/\s*(ER|PR|SR|CP|R|N)$/i,"");const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
+function baseNo(no){return String(no||"").trim().replace(/\s*(ER|PR|SR|CP|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"")}
 const starFirst=(a,b)=>(b.star?1:0)-(a.star?1:0);
 function blockSorter(list){const mn={};list.forEach(c=>{if(c.coord){const k=c.coord;if(!(k in mn)||cmp(c.no||c.name,mn[k])<0)mn[k]=c.no||c.name}});
   const bk=c=>c.coord?mn[c.coord]:(c.no||c.name);
@@ -794,9 +805,28 @@ function coordsOf(c){if(!c)return [];const a=Array.isArray(c.coords)&&c.coords.l
 function allCoords(){return [...new Set(S.cards.flatMap(coordsOf))].sort(cmp)}
 function byId(id){return S.cards.find(c=>c.id===id)}
 
+/* ---------- GitHub photos 폴더의 공식 사진 ---------- */
+// 파일 이름: 카드 번호 그대로 (패러렐은 번호 뒤 ★, 뒷면은 -뒷면). 확장자는 webp, jpg, png 순서로 찾아요.
+const RP_DIR=IS_SERIES?"series-photos/":"photos/", RP_EXT=["webp","jpg","png"], RP_KEY=NSP+"binder-rp", RP_RETRY=12*3600*1000;
+let RP={};try{RP=JSON.parse(localStorage.getItem(RP_KEY)||"{}")||{}}catch(e){RP={}}
+const rpQ=[],rpBusy=new Set();let rpRun=0,rpT=null,rpSaveT=null;
+function rpName(c,back){if(!c||!c.no)return "";return String(c.no).normalize("NFC")+(c.star?"★":"")+(back?"-뒷면":"")}
+function rpUrl(c,back){const n=rpName(c,back);if(!n)return "";const v=RP[n];
+  if(typeof v==="string"&&RP_EXT.includes(v))return RP_DIR+encodeURIComponent(n)+"."+v;
+  if(!(typeof v==="number"&&Date.now()-v<RP_RETRY))rpProbe(n);return ""}
+function rpProbe(n){if(rpBusy.has(n))return;rpBusy.add(n);rpQ.push(n);rpPump()}
+function rpPump(){while(rpRun<6&&rpQ.length){const n=rpQ.shift();rpRun++;
+  (async()=>{let found=0;for(const ext of RP_EXT){const ok=await new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=RP_DIR+encodeURIComponent(n)+"."+ext});if(ok){found=ext;break}}
+    const before=RP[n];RP[n]=found||Date.now();rpBusy.delete(n);rpRun--;
+    clearTimeout(rpSaveT);rpSaveT=setTimeout(()=>{try{localStorage.setItem(RP_KEY,JSON.stringify(RP))}catch(e){}},800);
+    if(found&&before!==found){clearTimeout(rpT);rpT=setTimeout(()=>{render();if(dDetail.open&&openId)openDetail(openId)},250)}
+    rpPump()})()}}
+// 앱을 열 때마다 "없음"으로 기억한 사진도 하루 두 번은 다시 확인해요 (새로 올린 사진 반영)
+
 function cardHTML(c,opts={}){
   const n=q(c.id), have=n>0;
-  const face=S.photos[c.id]?`<img src="${esc(S.photos[c.id])}" alt="">`:c.photo?`<img src="/_blob/${esc(c.photo)}" alt="" loading="lazy">`
+  const rpu=S.photos[c.id]||c.photo?"":rpUrl(c);
+  const face=S.photos[c.id]?`<img src="${esc(S.photos[c.id])}" alt="">`:c.photo?`<img src="/_blob/${esc(c.photo)}" alt="" loading="lazy">`:rpu?`<img src="${esc(rpu)}" alt="" loading="lazy">`
     :`<div class="art t-${TYPE[c.type]?c.type:"none"}">${iconSVG(c.part,c.type)}</div>`;
   return `<div class="card ${have?"have":"missing"}">${face}
     <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>${c.star?'<span class="sign" title="패러렐 카드" aria-hidden="true">★</span>':""}
@@ -917,16 +947,16 @@ const dDetail=$("#dDetail"); let openId=null, armDelete=false, photoTarget=null,
 function openDetail(id){
   const c=byId(id); if(!c){dDetail.open&&dDetail.close();return}
   openId=id; const n=q(id);
-  const frontSrc=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:""), backSrc=S.photos[c.id+"-b"]||"";
+  const ownF=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:""), ownB=S.photos[c.id+"-b"]||"", frontSrc=ownF||rpUrl(c), backSrc=ownB||rpUrl(c,true);
   const coordSets=coordsOf(c).map(name=>{const ms=S.cards.filter(x=>coordsOf(x).includes(name)).sort((a,b)=>PART_ORDER.indexOf(a.part)-PART_ORDER.indexOf(b.part)||starFirst(a,b));return {name,ms,mh:ms.filter(x=>q(x.id)>0).length}}).filter(o=>o.ms.length>1);
   const ord=S.navOrder.includes(id)?S.navOrder:S.cards.map(x=>x.id), ni=ord.indexOf(id);
   $("#detailBody").innerHTML=`<div class="grab"></div>
     <div class="dnav"><button class="navb" data-nav="-1" ${ni<=0?"disabled":""} aria-label="이전 카드">‹</button><span class="navpos">${ni+1} / ${ord.length}</span><button class="navb" data-nav="1" ${ni>=ord.length-1?"disabled":""} aria-label="다음 카드">›</button></div>
     <div class="sides">
       <figure class="side">${frontSrc?`<button class="zoom" data-zoom="${esc(c.id)}" aria-label="앞면 크게 보기">${cardHTML(c,{noCap:true})}</button>`:cardHTML(c,{noCap:true})}
-        <figcaption><span>앞면</span><span class="side-acts"><button data-act="photo" data-side="f">${frontSrc?"바꾸기":"사진 넣기"}</button>${frontSrc?'<button data-act="photodel" data-side="f">지우기</button>':""}</span></figcaption></figure>
+        <figcaption><span>앞면</span><span class="side-acts"><button data-act="photo" data-side="f">${frontSrc?"바꾸기":"사진 넣기"}</button>${ownF?`<button data-act="photodel" data-side="f">${rpUrl(c)?"공식 사진으로":"지우기"}</button>`:""}</span></figcaption></figure>
       <figure class="side">${backSrc?`<button class="zoom" data-zoom="${esc(c.id)}-b" aria-label="뒷면 크게 보기"><div class="card"><img src="${esc(backSrc)}" alt=""></div></button>`:`<button class="card back-empty" data-act="photo" data-side="b"><span>+</span>뒷면 사진 넣기</button>`}
-        <figcaption><span>뒷면</span><span class="side-acts">${backSrc?'<button data-act="photo" data-side="b">바꾸기</button><button data-act="photodel" data-side="b">지우기</button>':""}</span></figcaption></figure>
+        <figcaption><span>뒷면</span><span class="side-acts">${backSrc?`<button data-act="photo" data-side="b">바꾸기</button>${ownB?'<button data-act="photodel" data-side="b">지우기</button>':""}`:""}</span></figcaption></figure>
     </div>
     <div class="detail-top">
       <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span><span class="dname-text"><span class="kname">${esc(c.name)}</span>${c.jname?`<span class="jname" lang="ja">${esc(c.jname)}</span>`:""}</span><button class="qrbtn${S.photos[c.id+"-qr"]?" on":""}" data-act="qr" aria-label="QR 사진${S.photos[c.id+"-qr"]?" (등록됨)":""}">QR</button><button class="heart" data-act="want" aria-pressed="${!!S.want[c.id]}" aria-label="원해요">${S.want[c.id]?"♥":"♡"}</button></h3><p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
@@ -969,7 +999,7 @@ $("#detailBody").addEventListener("click",e=>{
 const dZoom=$("#dZoom"); let zoomCard=null,zoomSide="f";
 function openZoom(id,side){zoomCard=id;zoomSide=side;renderZoom();if(!dZoom.open)dZoom.showModal()}
 function renderZoom(){const c=byId(zoomCard);if(!c)return;
-  const f=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:""),b=S.photos[c.id+"-b"]||"";
+  const f=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"")||rpUrl(c),b=S.photos[c.id+"-b"]||rpUrl(c,true);
   if(zoomSide==="b"&&!b)zoomSide="f"; const src=zoomSide==="b"?b:f;
   $("#zoomBody").innerHTML=`<img src="${esc(src)}" alt="${esc(c.name)} ${zoomSide==="b"?"뒷면":"앞면"}">
     <div class="zoom-bar">${f&&b?`<button data-zs="f" aria-pressed="${zoomSide==="f"}">앞면</button><button data-zs="b" aria-pressed="${zoomSide==="b"}">뒷면</button>`:""}<button data-zs="x">닫기</button></div>`}
@@ -1263,7 +1293,7 @@ $("#moreBody").addEventListener("click",async e=>{
     toast(ok?"복사했어요":"자동 복사가 막혀 있어요. 선택된 글을 길게 눌러 복사해 주세요")}
 });
 function norm(s){return String(s||"").replace(/\s+/g,"").toLowerCase()}
-function mapRarity(s){s=norm(s);if(/^(er|앙코르레어|앙코르|encore)/.test(s))return "ER";if(/^(pr|프리미엄레어|프리미엄|premium)/.test(s))return "PR";if(/^(r|레어|rare|r레어)$/.test(s))return "R";if(/^(n|노멀|노말|normal|n노멀|n노말)$/.test(s))return "N";return null}
+function mapRarity(s){s=norm(s);if(/^(cp|캠페인)/.test(s)&&RAR.CP)return "CP";if(/^(sr|스페셜|슈퍼)/.test(s)&&RAR.SR)return "SR";if(/^(er|앙코르레어|앙코르|encore)/.test(s))return "ER";if(/^(pr|프리미엄레어|프리미엄|premium)/.test(s))return "PR";if(/^(r|레어|rare|r레어)$/.test(s))return "R";if(/^(n|노멀|노말|normal|n노멀|n노말)$/.test(s))return "N";return null}
 function mapSource(s){s=norm(s);if(/게임|기체|arcade|배출/.test(s))return "arcade";if(/프로모|promo|특전/.test(s))return "promo";return null}
 function mapType(s){s=norm(s);if(/러블리|lovely|큐트|cute/.test(s))return "lovely";if(/쿨|cool/.test(s))return "cool";if(/섹시|sexy/.test(s))return "sexy";if(/팝|pop/.test(s))return "pop";return ""}
 function mapPart(s){s=norm(s);if(/풀코디|풀|full/.test(s))return "full";if(/원피스|one|dress/.test(s))return "dress";if(/상의|탑|top/.test(s))return "top";if(/하의|보텀|바텀|bottom|스커트|팬츠/.test(s))return "bottom";if(/슈즈|신발|shoe/.test(s))return "shoes";if(/악세|액세|헤어|acc/.test(s))return "acc";return null}
@@ -1405,7 +1435,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-2";
+const APP_VERSION="2026.11.19-4";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
@@ -1415,7 +1445,7 @@ async function hardReload(){
 document.addEventListener("change",e=>{if(e.target&&e.target.id==="bkPhotos"){S.bkPhotos=e.target.checked;savePrefs();if(dMore.open&&!moreView)openMore()}});
 /* ---------- 백업 코드 (Firebase 동기화) ---------- */
 const CLOUD={cfg:null,ready:false,db:null,ref:null,code:"",status:"off",last:0,unsub:null,timer:null,busy:false,again:false,err:""};
-const CK="binder-cloud";
+const CK=NSP+"binder-cloud";
 const CODE_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function fmtCode(c){return String(c||"").replace(/(.{4})(?=.)/g,"$1-")}
 function cleanCode(c){return String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
@@ -1758,7 +1788,7 @@ dSeek.addEventListener("close",()=>renderSeek());
 
 /* 이미지 만들기 */
 const TYPE_ART={lovely:["#FFE0EA","#F7AFC7","#E0689A"],cool:["#E0F2FF","#A6D6F5","#3F97D6"],sexy:["#EDE4FF","#C4AEF2","#8E6AD8"],pop:["#FFE9D3","#FFBF8E","#EC8340"],none:["#FFF6F9","#EAD9E0","#B58497"]};
-const RAR_COL={ER:"#C86BE0",PR:"#D0679F",R:"#2F8FDB",N:"#A8939C"};
+const RAR_COL={ER:"#C86BE0",PR:"#D0679F",R:"#2F8FDB",N:"#A8939C",CP:"#E5577C",SR:"#5A8FE0"};
 function loadSrcImg(src){return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
 function rr(x,ctx,X,Y,W,H,r){ctx.beginPath();ctx.moveTo(X+r,Y);ctx.arcTo(X+W,Y,X+W,Y+H,r);ctx.arcTo(X+W,Y+H,X,Y+H,r);ctx.arcTo(X,Y+H,X,Y,r);ctx.arcTo(X,Y,X+W,Y,r);ctx.closePath()}
 function wrapLines(ctx,text,maxW,maxLines){const out=[];let cur="";
@@ -1793,7 +1823,7 @@ async function makeSeekImage(){
   x.fillStyle=C.soft;x.font=`22px ${BODY}`;const d=new Date();
   x.fillText(`${secs.map(s=>`${SK_TITLE[s.m]} ${s.list.length}종`).join(" · ")}`,PAD,124);
   x.textAlign="right";x.fillText(`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`,W-PAD,124);x.textAlign="left";
-  const imgs={};await Promise.all(secs.flatMap(s=>s.list).map(async c=>{const src=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"");imgs[c.id]=await loadSrcImg(src)}));
+  const imgs={};await Promise.all(secs.flatMap(s=>s.list).map(async c=>{const src=S.photos[c.id]||(c.photo?"/_blob/"+c.photo:"")||rpUrl(c);imgs[c.id]=await loadSrcImg(src)}));
   let y=HEAD;
   for(const s of secs){const h=secH(s);
     x.save();rr(0,x,PAD-20,y,W-(PAD-20)*2,h,28);x.fillStyle="#FFFFFF";x.fill();x.strokeStyle=C.pink;x.globalAlpha=.45;x.lineWidth=2;x.stroke();x.restore();
@@ -1906,6 +1936,23 @@ $("#qrInput").addEventListener("change",async e=>{const file=e.target.files[0];e
     S.photos[c.id+"-qr"]=src;if(backend.kind!=="db")saveLocalPhotos();
     openQr(c.id);if(openId===c.id)openDetail(c.id);toast("QR 사진을 넣었어요")}catch(err){toast(photoErr(err))}});
 dQr.addEventListener("close",()=>{qrId=null});
+
+/* 바인더 바꾸기 */
+async function flushAllSaves(){
+  try{if(typeof timers!=="undefined"&&backend.kind==="db"){const ks=Object.keys(timers).filter(k=>timers[k]);ks.forEach(k=>{clearTimeout(timers[k]);timers[k]=null});await Promise.all(ks.map(k=>flush(k)));
+    for(let i=0;i<30&&Object.keys(inflight).some(k=>inflight[k]);i++)await new Promise(r=>setTimeout(r,100))}}catch(e){}
+  try{if(backend.kind!=="db")saveLocal()}catch(e){}
+  try{if(typeof photoChain!=="undefined")await photoChain}catch(e){}
+}
+async function switchNS(){const to=IS_SERIES?"encore":"series";
+  toast(to==="series"?"이전 시리즈 바인더를 여는 중…":"앙코르 바인더를 여는 중…");
+  await flushAllSaves();
+  try{localStorage.setItem(NS_KEY,to)}catch(e){}
+  try{history.replaceState(null,"","#"+to)}catch(e){location.hash=to}
+  location.reload()}
+$("#nsBtn").addEventListener("click",switchNS);
+(()=>{const h=document.querySelector(".cover h1");if(h)h.textContent=NS_NAME;document.title=NS_NAME;document.body.classList.toggle("ns-series",IS_SERIES);
+  const b=$("#nsBtn");if(b){b.textContent=IS_SERIES?"앙코르":"이전 시리즈";b.setAttribute("aria-pressed",IS_SERIES);b.setAttribute("aria-label",IS_SERIES?"앙코르 바인더로 돌아가기":"이전 시리즈 바인더 열기")}})();
 
 /* ---------- zip 사진 풀기 ---------- */
 let jszipP=null;
