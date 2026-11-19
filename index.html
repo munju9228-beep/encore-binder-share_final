@@ -840,7 +840,17 @@ setTimeout(()=>rpLoadList(),1200);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")rpLoadList()});
 
 function rpName(c,back){if(!c||!c.no)return "";return String(c.no).normalize("NFC")+(c.star?"★":"")+(back?"-뒷면":"")}
-function rpUrl(c,back){if(rpRepo()&&!rpListFail){if(!RPL||!Array.isArray(RPL.files))return "";const m=rpBuild(),pth=m[c.id+(back?"-b":"")];return pth?rpPath(pth):""}
+// 악세사리 카드는 직접 넣을 때처럼 오른쪽으로 90도 돌려서 보여 줘요 (가로 사진일 때만)
+const rpRot={},rpRotBusy=new Set();let rpRotT=null;
+function rpUrl(c,back){const u=rpUrlRaw(c,back);if(!u||!c||c.part!=="acc")return u;
+  if(rpRot[u]!=null)return rpRot[u]||u;
+  if(!rpRotBusy.has(u)){rpRotBusy.add(u);const im=new Image();
+    im.onload=()=>{try{if(im.naturalWidth>im.naturalHeight){const cv=document.createElement("canvas");cv.width=im.naturalHeight;cv.height=im.naturalWidth;const g=cv.getContext("2d");g.imageSmoothingQuality="high";g.translate(cv.width,0);g.rotate(Math.PI/2);g.drawImage(im,0,0);
+        cv.toBlob(b=>{rpRot[u]=b?URL.createObjectURL(b):"";rpRotDone()},"image/webp",.95)}else{rpRot[u]="";rpRotDone()}}catch(e){rpRot[u]="";rpRotDone()}};
+    im.onerror=()=>{rpRot[u]="";rpRotDone()};im.src=u}
+  return ""}
+function rpRotDone(){clearTimeout(rpRotT);rpRotT=setTimeout(()=>{render();if(dDetail.open&&openId)openDetail(openId);if(typeof dZoom!=="undefined"&&dZoom.open)renderZoom()},120)}
+function rpUrlRaw(c,back){if(rpRepo()&&!rpListFail){if(!RPL||!Array.isArray(RPL.files))return "";const m=rpBuild(),pth=m[c.id+(back?"-b":"")];return pth?rpPath(pth):""}
   const n=rpName(c,back);if(!n)return "";const v=RP[n];
   if(typeof v==="string"&&RP_EXT.includes(v))return RP_DIR+encodeURIComponent(n)+"."+v;
   if(!(typeof v==="number"&&Date.now()-v<RP_RETRY))rpProbe(n);return ""}
@@ -1466,7 +1476,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-6";
+const APP_VERSION="2026.11.19-7";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
