@@ -21,7 +21,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   // 공식 카드 사진 (photos/, series-photos/): 저장본을 바로 보여 주고, 뒤에서 새 사진이 있는지 확인
-  if (/\/(series-)?photos\//.test(url.pathname)) {
+  if (/\/(series-)?(photos|logos)\//.test(url.pathname)) {
     e.respondWith(caches.open(PHOTOS).then(async c => {
       const hit = await c.match(req);
       const net = fetch(req, {cache: "no-cache"}).then(r => { if (r && r.ok) c.put(req, r.clone()); return r; }).catch(() => hit);

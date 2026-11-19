@@ -370,6 +370,10 @@ dialog.popdlg::backdrop{background:rgba(70,25,45,.5)}
 .r-R{background:#2F8FDB}
 .r-N{background:#A8939C}
 .r-CP{background:linear-gradient(135deg,#F2A93B,#E5577C)}
+.ns-series .rar{background:#9A7FD1;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ns-series .rar.r-N{background:#A8939C}.ns-series .rar.r-R{background:#2F8FDB}.ns-series .rar.r-PR,.ns-series .rar.r-P-PR{background:linear-gradient(135deg,#E8679A,#B774E8)}.ns-series .rar.r-CP,.ns-series .rar.r-CPPR{background:linear-gradient(135deg,#F2A93B,#E5577C)}
+.rarpick{max-height:180px;overflow:auto;padding:2px}
+.rarpick .chip{min-width:52px}
 .r-SR{background:linear-gradient(135deg,#7A6CF0,#3FB6D9)}
 .qty{position:absolute;bottom:34px;left:6px;background:var(--badge-bg);color:var(--pink-deep);border:2px solid var(--pink);font-family:var(--display);font-size:14px;line-height:1;padding:4px 8px 3px;border-radius:10px;box-shadow:0 1px 3px rgba(150,60,90,.25)}
 .card.holo.have{box-shadow:0 0 0 2px #fff,0 0 0 4px transparent}
@@ -576,7 +580,13 @@ const NS_NAME=IS_SERIES?"아이카츠 시리즈":"아이카츠 앙코르";
 const RAR = {ER:"ER 앙코르 레어",PR:"PR 프리미엄 레어",R:"R 레어",N:"N 노멀"};
 const RAR_ORDER = ["ER","PR","R","N"];
 // 이전 시리즈는 등급 구성이 달라요
-if(IS_SERIES){delete RAR.ER;Object.assign(RAR,{CP:"CP",SR:"SR"});RAR_ORDER.splice(0,RAR_ORDER.length,"CP","SR","PR","R","N")}
+const SERIES_RAR=["N","R","CP","P/PR","CPPR","MPR","SPR","JLR","BFR","FR","LPR","SEC","PE","PN","PA","PV","PZ","FB","PC","PM","PG","PL","PS","MC","DS","CD","PD","PT","PR","BD","GC","PJ","SP","PB","AM","MA"];
+if(IS_SERIES){Object.keys(RAR).forEach(k=>delete RAR[k]);SERIES_RAR.forEach(k=>RAR[k]=k);RAR_ORDER.splice(0,RAR_ORDER.length,...SERIES_RAR)}
+// 이전 시리즈만 등급을 여러 개 고를 수 있어요 (c.rarity = 첫 등급, c.rars = 2개 이상일 때 전체)
+function rarsOf(c){if(!c)return [];const a=IS_SERIES&&Array.isArray(c.rars)&&c.rars.length?c.rars:[c.rarity];return a.filter(Boolean)}
+const rarCls=r=>String(r||"").replace(/[^A-Za-z0-9]/g,"-");
+const RAR_RE=new RegExp("\\s+("+RAR_ORDER.slice().sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\\/]/g,"\\$&")).join("|")+")$","i");
+function mapRars(t){return [...new Set(String(t||"").split(/\s*[+,]\s*/).map(x=>{const u=x.trim().toUpperCase();return RAR_ORDER.find(k=>k.toUpperCase()===u)}).filter(Boolean))]}
 const SRC = {arcade:"게임기체",promo:"프로모션"};
 const SRC_ORDER = ["arcade","promo"];
 const PART = {top:"상의",bottom:"하의",dress:"원피스",full:"풀코디",shoes:"슈즈",acc:"헤어 악세사리"};
@@ -719,7 +729,7 @@ function seedDefaults(){if(IS_SERIES)return false;
   const msg=[nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:""].filter(Boolean).join(", ");
   if(msg)setTimeout(()=>toast(`${msg}이 업데이트됐어요`),600);
 }
-const SYNC_F=["no","name","jname","dan","rarity","type","brand","source","part","coord","coords","star"];
+const SYNC_F=["no","name","jname","dan","rarity","rars","type","brand","source","part","coord","coords","star"];
 const jv=v=>v==null||v===false||v===""||(Array.isArray(v)&&!v.length)?null:JSON.stringify(v);
 function markLocal(c,k){if(!Array.isArray(S.syncIds)||!S.syncIds.includes(c.id))return;c.lf=[...new Set([...(c.lf||[]),k])]}
 const IS_SHARE=false;
@@ -767,10 +777,17 @@ async function syncFromFile(){
   const parts=[ic?"정보":"",nc?`새 카드 ${nc}장`:"",uc?`카드 정보 ${uc}장`:"",rc?`삭제 ${rc}장`:"",kc?`삭제됐지만 기록이 있어 남긴 카드 ${kc}장`:"",pc?`사진 ${pc}장`:""].filter(Boolean);
   if(parts.length)toast(`카드 목록 파일을 반영했어요: ${parts.join(", ")}`);
 }
+// 이전 시리즈: 앙코르 바인더의 브랜드와 로고를 그대로 가져와요
+function mergeEncoreBrands(){try{const e=JSON.parse(localStorage.getItem("binder-data")||"null");if(!e||!Array.isArray(e.brands))return;
+  e.brands.forEach(b=>{if(!b||!b.id)return;const i=S.brands.findIndex(x=>x.id===b.id);if(i>=0)S.brands[i]=Object.assign({},S.brands[i],b);else S.brands.push(Object.assign({},b))})}catch(x){}}
+function encoreLogos(){return new Promise(res=>{let r;try{r=indexedDB.open("encore-binder",1)}catch(e){return res({})}
+  r.onupgradeneeded=ev=>{try{ev.target.transaction.abort()}catch(e){}};r.onerror=()=>res({});
+  r.onsuccess=()=>{const db=r.result;if(!db.objectStoreNames.contains("photos")){db.close();return res({})}const out={};const tx=db.transaction("photos","readonly");const rq=tx.objectStore("photos").openCursor();
+    rq.onsuccess=()=>{const c=rq.result;if(c){if(String(c.key).startsWith("logo-"))out[c.key]=c.value;c.continue()}};tx.oncomplete=()=>{db.close();res(out)};tx.onerror=()=>{db.close();res({})}}})}
 async function initBackend(){
-  loadPrefs(); applyTheme(S.theme); backend={kind:"local"}; loadLocal();
+  loadPrefs(); applyTheme(S.theme); backend={kind:"local"}; loadLocal(); if(IS_SERIES)mergeEncoreBrands();
   migrateMemos(); seedDefaults();
-  try{S.photos=await idbAll();savedPhotos=Object.assign({},S.photos)}catch(e){S.photos={};toast("사진 저장소를 열지 못했어요. 브라우저 설정에서 사이트 데이터 저장을 허용해 주세요")}
+  try{S.photos=await idbAll();savedPhotos=Object.assign({},S.photos);if(IS_SERIES){try{Object.assign(S.photos,await encoreLogos())}catch(e){}}}catch(e){S.photos={};toast("사진 저장소를 열지 못했어요. 브라우저 설정에서 사이트 데이터 저장을 허용해 주세요")}
   S.loading=false; render();
   syncFromFile().catch(()=>{}).then(showPopups); cloudStart();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
@@ -782,16 +799,16 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const q=id=>S.qty[id]||0;
 const cmp=(a,b)=>String(a).localeCompare(String(b),"ko",{numeric:true});
 const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-function fmtNo(no,source){if(IS_SERIES)return String(no||"").trim().replace(/\s*(ER|PR|SR|CP|R|N)$/i,"");const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
+function fmtNo(no,source){if(IS_SERIES)return String(no||"").trim().replace(RAR_RE,"");const base=String(no||"").trim().replace(/\s*(ER|PR|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"");return base?(source==="promo"?"EP":"E")+base:""}
 function baseNo(no){return String(no||"").trim().replace(/\s*(ER|PR|SR|CP|R|N)$/i,"").replace(/^(EP|E|P)\s*/i,"")}
 const starFirst=(a,b)=>(b.star?1:0)-(a.star?1:0);
 function blockSorter(list){const mn={};list.forEach(c=>{if(c.coord){const k=c.coord;if(!(k in mn)||cmp(c.no||c.name,mn[k])<0)mn[k]=c.no||c.name}});
   const bk=c=>c.coord?mn[c.coord]:(c.no||c.name);
   return (a,b)=>cmp(bk(a),bk(b))||cmp(a.coord||"",b.coord||"")||starFirst(a,b)||cmp(a.no||a.name,b.no||b.name)}
-function dispNo(c){return c&&c.no?c.no+" "+(RAR[c.rarity]?c.rarity:"")+(c.star?"★":""):""}
+function dispNo(c){return c&&c.no?c.no+" "+(RAR[c.rarity]?rarsOf(c).join("·"):"")+(c.star?"★":""):""}
 function normCard(c){if(c&&c.no){const n=fmtNo(c.no,c.source);if(n!==c.no)c.no=n}return c}
 const brandById=id=>S.brands.find(b=>b.id===id);
-const logoOf=id=>S.photos["logo-"+id]||"";
+const logoOf=id=>S.photos["logo-"+id]||rpLogo(id);
 function label(dim,v){if(dim==="coord")return v==="__nocoord"?"코디 미정":v;if(dim==="brand"){const b=brandById(v);return b?b.name:"브랜드 미정"}if(dim==="dan"&&v==="__promo")return "프로모션";if(dim==="type")return TYPE[v]||"타입 미정";if(dim==="rarity")return RAR[v]||v;if(dim==="source")return SRC[v]||v;if(dim==="part")return PART[v]||v;return v||"탄 미정"}
 function orderKeys(dim,keys){
   const ord=dim==="brand"?S.brands.map(b=>b.id):dim==="type"?TYPE_ORDER:dim==="rarity"?RAR_ORDER:dim==="source"?SRC_ORDER:dim==="part"?PART_ORDER:null;
@@ -819,10 +836,11 @@ let RPL=null;try{RPL=JSON.parse(localStorage.getItem(RPL_KEY)||"null")}catch(e){
 let rpMap=null,rpMapCards=null,rpMapLen=-1,rpMapT=-1,rpListBusy=false,rpListFail=false;
 function rpRepo(){const h=location.hostname;if(!/\.github\.io$/i.test(h))return null;const owner=h.split(".")[0];
   const seg=location.pathname.split("/").filter(Boolean)[0];const repo=seg&&!/\.html?$/i.test(seg)?seg:h;return {owner,repo}}
-async function rpLoadList(force){const r=rpRepo();if(!r||rpListBusy)return;if(!force&&RPL&&Date.now()-RPL.t<RPL_TTL)return;rpListBusy=true;
+async function rpLoadList(force){const r=rpRepo();if(!r||rpListBusy)return;if(!force&&RPL&&Array.isArray(RPL.logos)&&Date.now()-RPL.t<RPL_TTL)return;rpListBusy=true;
   try{const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/git/trees/HEAD?recursive=1`,{headers:{Accept:"application/vnd.github+json"}});
     if(res.ok){const d=await res.json();const files=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(RP_DIR)&&/\.(webp|jpe?g|png|gif|avif)$/i.test(x.path)).map(x=>x.path);
-      const changed=!RPL||JSON.stringify(RPL.files)!==JSON.stringify(files);RPL={t:Date.now(),files};try{localStorage.setItem(RPL_KEY,JSON.stringify(RPL))}catch(e){}
+      const logos=(d.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(LG_DIR)&&/\.(webp|jpe?g|png|gif|avif|svg)$/i.test(x.path)).map(x=>x.path);
+      const changed=!RPL||JSON.stringify(RPL.files)!==JSON.stringify(files)||JSON.stringify(RPL.logos)!==JSON.stringify(logos);RPL={t:Date.now(),files,logos};lgMap=null;try{localStorage.setItem(RPL_KEY,JSON.stringify(RPL))}catch(e){}
       if(changed){rpMap=null;render();if(dDetail.open&&openId)openDetail(openId)}}
     else if(!RPL){rpListFail=true;render()}
   }catch(e){if(!RPL){rpListFail=true;render()}}rpListBusy=false}
@@ -835,6 +853,12 @@ function rpBuild(){
   RPL.files.forEach(path=>{const name=path.slice(RP_DIR.length);if(name.includes("/"))return;let k=fileKey(name),side="";const mb=k.match(/^(.*?)-?(뒷면|뒷장|후면|뒤|back|b)$/);
     if(!look(k)&&mb&&look(mb[1])){k=mb[1];side="-b"}const c=look(k);if(!c)return;const key=c.id+side;if(!m[key]||rank(path)<rank(m[key]))m[key]=path});
   rpMap=m;rpMapCards=S.cards;rpMapLen=S.cards.length;rpMapT=RPL.t;return m}
+// 브랜드 로고: logos 폴더(이전 시리즈는 series-logos)에 브랜드 이름으로 올리면 돼요 (예: 엔젤리 슈가.png)
+const LG_DIR="logos/"; // 앙코르와 이전 시리즈가 같은 로고를 써요let lgMap=null,lgT=-1;
+function lgKey(x){return String(x||"").normalize("NFC").replace(/\.[^.]+$/,"").toLowerCase().replace(/[\s_\-·.]/g,"")}
+function rpLogo(id){if(!RPL||!Array.isArray(RPL.logos)||!RPL.logos.length)return "";const b=S.brands.find(x=>x.id===id);if(!b)return "";
+  if(!lgMap||lgT!==RPL.t){lgMap={};RPL.logos.forEach(path=>{const nm=path.slice(LG_DIR.length);if(nm.includes("/"))return;const k=lgKey(nm);if(!lgMap[k]||/\.png$/i.test(path))lgMap[k]=path});lgT=RPL.t}
+  const pth=lgMap[lgKey(b.name)]||lgMap[lgKey(b.id)];return pth?rpPath(pth):""}
 function rpPath(p){return p.split("/").map(encodeURIComponent).join("/")}
 setTimeout(()=>rpLoadList(),1200);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")rpLoadList()});
@@ -870,7 +894,7 @@ function cardHTML(c,opts={}){
   const face=S.photos[c.id]?`<img src="${esc(S.photos[c.id])}" alt="">`:c.photo?`<img src="/_blob/${esc(c.photo)}" alt="" loading="lazy">`:rpu?`<img src="${esc(rpu)}" alt="" loading="lazy">`
     :`<div class="art t-${TYPE[c.type]?c.type:"none"}">${iconSVG(c.part,c.type)}</div>`;
   return `<div class="card ${have?"have":"missing"}">${face}
-    <span class="rar r-${esc(c.rarity)}">${esc(c.rarity)}</span>${c.star?'<span class="sign" title="패러렐 카드" aria-hidden="true">★</span>':""}
+    <span class="rar r-${esc(rarCls(c.rarity))}">${esc(rarsOf(c).join("·"))}</span>${c.star?'<span class="sign" title="패러렐 카드" aria-hidden="true">★</span>':""}
     ${have?`<span class="qty">×${n}</span>`:""}
     ${opts.noCap?"":`<span class="cap">${esc(c.no?dispNo(c)+" ":"")}${esc(c.name)}</span>`}</div>${S.want[c.id]&&!opts.noHeart?`<span class="wheart${have?" low":""}" aria-hidden="true">♥</span>`:""}`;
 }
@@ -921,7 +945,7 @@ function render(){
     <p>카드를 한 장씩 추가하거나, 스프레드시트에 정리한 목록을 한 번에 붙여넣을 수 있어요.</p>
     <div class="row" style="justify-content:center"><button class="btn primary" data-act="add">카드 추가</button><button class="btn" data-act="import">목록 붙여넣기</button></div></div>`;return}
 
-  const passDims=c=>DIMS.every(d=>!S.f[d].length||S.f[d].includes(c[d]))&&(!S.f.sign.includes("star")||!!c.star)&&(!S.f.want.includes("yes")||!!S.want[c.id]);
+  const passDims=c=>DIMS.every(d=>!S.f[d].length||(d==="rarity"?rarsOf(c).some(r=>S.f.rarity.includes(r)):S.f[d].includes(c[d])))&&(!S.f.sign.includes("star")||!!c.star)&&(!S.f.want.includes("yes")||!!S.want[c.id]);
   const passOwn=c=>S.own==="all"||(S.own==="have")===(q(c.id)>0);
   const qn=norm(S.search), gd=qn?"coord":S.groupBy;
   const passSearch=c=>!qn||coordsOf(c).some(x=>norm(x).includes(qn))||norm(c.name).includes(qn)||norm(c.jname||"").includes(qn);
@@ -1001,7 +1025,7 @@ function openDetail(id){
     </div>
     <div class="detail-top">
       <div><h3 class="dname"><span class="art nic t-${TYPE[c.type]?c.type:"none"}" title="${esc(PART[c.part]||"")}">${iconSVG(c.part,c.type)}</span><span class="dname-text"><span class="kname">${esc(c.name)}</span>${c.jname?`<span class="jname" lang="ja">${esc(c.jname)}</span>`:""}</span><button class="qrbtn${S.photos[c.id+"-qr"]?" on":""}" data-act="qr" aria-label="QR 사진${S.photos[c.id+"-qr"]?" (등록됨)":""}">QR</button><button class="heart" data-act="want" aria-pressed="${!!S.want[c.id]}" aria-label="원해요">${S.want[c.id]?"♥":"♡"}</button></h3><p class="muted">${c.no?"카드 번호 "+esc(dispNo(c)):"카드 번호 없음"}</p>
-      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 패러렐</span>':""}<span class="tag">${esc(RAR[c.rarity])}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
+      <div class="tags"><span class="tag">${esc(c.dan||"탄 미정")}</span>${c.star?'<span class="tag signtag">★ 패러렐</span>':""}<span class="tag">${esc(rarsOf(c).map(r=>RAR[r]||r).join(" · "))}</span><span class="tag tt-${TYPE[c.type]?c.type:"none"}">${esc(label("type",c.type))}</span>${brandById(c.brand)?`<span class="tag btag">${logoOf(c.brand)?`<img src="${esc(logoOf(c.brand))}" alt="">`:""}${esc(brandById(c.brand).name)}</span>`:""}<span class="tag">${esc(SRC[c.source])}</span><span class="tag">${esc(PART[c.part])}</span></div></div>
     </div>
     ${c.amemo?`<div class="memo"><p class="label">메모</p>${esc(c.amemo)}</div>`:""}${c.memo?`<div class="memo mine"><p class="label">내 메모</p>${esc(c.memo)}</div>`:""}
     <div class="stepper"><span>가지고 있는 장수</span><div class="ctrl">
@@ -1148,12 +1172,12 @@ function openForm(id){
       <div class="field"><label for="fDan">탄</label><input id="fDan" list="danList" value="${esc(c.dan)}" placeholder="예: 1탄"></div></div>
       <div class="field"><label for="fName">카드 이름</label><input id="fName" value="${esc(c.name)}" required placeholder="카드에 적힌 이름"></div>
       <div class="field"><label for="fJname">일본어 이름 (선택)</label><input id="fJname" lang="ja" value="${esc(c.jname||"")}" placeholder="예: オーロラキス キャミソール"></div>
-      <div class="field"><label>등급</label>${pickHTML("rarity",RAR,RAR_ORDER,c.rarity)}</div>
+      <div class="field"><label>등급${IS_SERIES?" (여러 개 고를 수 있어요)":""}</label>${IS_SERIES?`<div class="pick rarpick" data-pick="rarity" data-multi="1">${RAR_ORDER.map(k=>`<button type="button" class="chip" data-v="${esc(k)}" aria-pressed="${rarsOf(c).includes(k)}">${esc(k)}</button>`).join("")}</div>`:pickHTML("rarity",RAR,RAR_ORDER,c.rarity)}</div>
       <div class="field"><label>타입</label>${pickHTML("type",{...TYPE,none:"미정"},[...TYPE_ORDER,"none"],TYPE[c.type]?c.type:"none")}</div>
       <div class="field"><div class="flabel"><label>브랜드</label><button type="button" class="linkbtn" data-act="brands">브랜드 관리</button></div><div id="brandPick">${brandPickHTML(brandById(c.brand)?c.brand:"none")}</div></div>
       <div class="field"><label>배출처</label>${pickHTML("source",SRC,SRC_ORDER,c.source)}</div>
       <div class="field"><label>부위</label>${pickHTML("part",PART,PART_ORDER,c.part)}</div>
-      <div class="field"><label>패러렐</label><button type="button" class="chip starchip" id="fStar" aria-pressed="${!!c.star}">★ 패러렐 카드</button></div>
+      ${IS_SERIES?"":`<div class="field"><label>패러렐</label><button type="button" class="chip starchip" id="fStar" aria-pressed="${!!c.star}">★ 패러렐 카드</button></div>`}
       <div class="field"><div class="flabel"><label>코디 이름 (선택)</label><button type="button" class="linkbtn" data-act="addcoord">+ 코디 추가</button></div>
         <div id="coordFields">${(coordsOf(c).length?coordsOf(c):[""]).map(coordRow).join("")}</div></div>
       <div class="field"><label for="fMemo">내 메모 (선택)</label><textarea id="fMemo" rows="3" placeholder="예: 잡지 ○월호 부록, 이벤트 입장 특전, 교환해서 받음">${esc(c.memo)}</textarea></div>
@@ -1168,7 +1192,7 @@ function openForm(id){
 $("#formBody").addEventListener("click",e=>{
   if(e.target.closest('[data-act="addcoord"]')){const w=$("#coordFields");w.insertAdjacentHTML("beforeend",coordRow(""));const ins=w.querySelectorAll(".fCoordIn");ins[ins.length-1].focus();return}
   const rx=e.target.closest('[data-act="rmcoord"]');if(rx){const w=$("#coordFields");if(w.children.length>1)rx.closest(".coordrow").remove();else w.querySelector(".fCoordIn").value="";return}
-  const b=e.target.closest(".pick .chip"); if(b){b.parentElement.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));if(b.parentElement.dataset.pick==="source")refreshAutoNo()}
+  const b=e.target.closest(".pick .chip"); if(b&&b.parentElement.dataset.multi){b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true");return} if(b){b.parentElement.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));if(b.parentElement.dataset.pick==="source")refreshAutoNo()}
   if(e.target.id==="saveMore")saveForm(true);
   const st=e.target.closest("#fStar"); if(st){st.setAttribute("aria-pressed",st.getAttribute("aria-pressed")!=="true")}
   if(e.target.closest('[data-act="brands"]'))openBrands();
@@ -1181,8 +1205,9 @@ $("#formBody").addEventListener("submit",e=>{e.preventDefault();saveForm(false)}
 function saveForm(more){
   const name=$("#fName").value.trim(); if(!name){$("#fName").focus();toast("카드 이름을 적어 주세요");return}
   const pv=k=>{const b=document.querySelector(`[data-pick="${k}"] [aria-pressed="true"]`);return b?b.dataset.v:null};
-  const data={no:"",name,jname:$("#fJname").value.trim(),dan:$("#fDan").value.trim(),rarity:pv("rarity")||"N",type:pv("type")||"none",brand:pv("brand")||"none",source:pv("source")||"arcade",part:pv("part")||"top",star:$("#fStar").getAttribute("aria-pressed")==="true",coord:"",memo:$("#fMemo").value.trim()};
+  const data={no:"",name,jname:$("#fJname").value.trim(),dan:$("#fDan").value.trim(),rarity:pv("rarity")||"N",type:pv("type")||"none",brand:pv("brand")||"none",source:pv("source")||"arcade",part:pv("part")||"top",star:!!$("#fStar")&&$("#fStar").getAttribute("aria-pressed")==="true",coord:"",memo:$("#fMemo").value.trim()};
   data.no=fmtNo($("#fNo").value,data.source);
+  if(IS_SERIES){const rs=[...document.querySelectorAll('[data-pick="rarity"] [aria-pressed="true"]')].map(x=>x.dataset.v);data.rarity=rs[0]||"N";if(rs.length>1)data.rars=rs}
   if(!data.star)delete data.star;
   if(!data.jname)delete data.jname;
   if(data.type==="none")delete data.type;
@@ -1204,7 +1229,7 @@ function openFilter(){
   const grp=(dim,title,keys)=>keys.length?`<div class="fgroup"><p class="label">${title}</p><div class="pick" data-fdim="${dim}">${keys.map(k=>`<button class="chip" data-v="${esc(k)}" aria-pressed="${S.f[dim].includes(k)}">${esc(label(dim,k))}</button>`).join("")}</div></div>`:"";
   $("#filterBody").innerHTML=`<div class="grab"></div><h3>필터</h3><p class="muted" style="margin-bottom:14px">여러 개를 고르면 그중 하나라도 맞는 카드가 보여요</p>
     <div class="fgroup"><p class="label">원해요</p><div class="pick" data-fdim="want"><button class="chip wantchip" data-v="yes" aria-pressed="${S.f.want.includes("yes")}">♥ 원해요</button></div></div>
-    <div class="fgroup"><p class="label">패러렐</p><div class="pick" data-fdim="sign"><button class="chip" data-v="star" aria-pressed="${S.f.sign.includes("star")}">★ 패러렐 카드</button></div></div>
+    ${IS_SERIES?"":`<div class="fgroup"><p class="label">패러렐</p><div class="pick" data-fdim="sign"><button class="chip" data-v="star" aria-pressed="${S.f.sign.includes("star")}">★ 패러렐 카드</button></div></div>`}
     ${grp("dan","탄",allDans())}${grp("rarity","등급",RAR_ORDER)}${grp("type","타입",TYPE_ORDER)}${grp("brand","브랜드",S.brands.map(b=>b.id))}${grp("source","배출처",SRC_ORDER)}${grp("part","부위",PART_ORDER)}
     <div class="row"><button class="btn" data-act="fclear">필터 지우기</button><button class="btn primary grow" data-act="fclose">완료</button></div>`;
   if(!dFilter.open)dFilter.showModal();
@@ -1275,7 +1300,7 @@ function openMore(view){moreView=view||null;
     setTimeout(()=>ta.focus(),50);
   } else if(view==="export"){
     const head="번호\t이름\t탄\t등급\t타입\t브랜드\t배출처\t부위\t코디\t수량\t메모";
-    const bs=blockSorter(S.cards),lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||bs(a,b)).map(c=>[dispNo(c),c.name,c.dan,RAR[c.rarity],TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],coordsOf(c).join(" / "),q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
+    const bs=blockSorter(S.cards),lines=S.cards.slice().sort((a,b)=>cmp(a.dan,b.dan)||bs(a,b)).map(c=>[dispNo(c),c.name,c.dan,rarsOf(c).map(r=>RAR[r]||r).join(" + "),TYPE[c.type]||"",brandById(c.brand)?brandById(c.brand).name:"",SRC[c.source],PART[c.part],coordsOf(c).join(" / "),q(c.id),(c.memo||"").replace(/[\t\r\n]+/g," ")].join("\t"));
     body.innerHTML=`<div class="grab"></div><h3>목록 복사하기</h3>
       <p class="muted" style="margin-bottom:10px">전체 선택해서 복사한 뒤 스프레드시트에 붙여넣으면 백업이 돼요. 다시 붙여넣기로 불러올 수도 있어요.</p>
       <div class="field"><textarea id="expText" rows="9" readonly>${esc([head,...lines].join("\n"))}</textarea></div>
@@ -1344,8 +1369,8 @@ function parseImport(text){
     if(!line.trim())return; const c=line.includes("\t")?line.split("\t"):line.split(",");
     const cell=k=>(c[k]||"").trim();
     if(i===0&&/번호|이름/.test(cell(0)+cell(1)))return;
-    const star=/★|싸인|패러렐/.test(cell(0));
-    const r={star,no:cell(0).replace(/★|싸인|패러렐/g,"").trim(),name:cell(1),dan:cell(2),rarity:mapRarity(cell(3)),type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
+    const star=!IS_SERIES&&/★|싸인|패러렐/.test(cell(0));
+    const r={star,no:cell(0).replace(/★|싸인|패러렐/g,"").trim(),name:cell(1),dan:cell(2),rarity:IS_SERIES?(mapRars(cell(3))[0]||null):mapRarity(cell(3)),rars:IS_SERIES?mapRars(cell(3)):null,type:mapType(cell(4)),brandName:cell(5),source:mapSource(cell(6)),part:mapPart(cell(7)),coord:cell(8),qty:parseInt(cell(9),10)||0,memo:c.slice(10).join(line.includes("\t")?" ":",").trim()};
     if(!r.name||!r.rarity||!r.source||!r.part){bad.push(i+1);return} rows.push(r);
   });
   return {rows,bad};
@@ -1355,8 +1380,8 @@ function doImport(){
   rows.forEach(r=>{
     r.no=fmtNo(r.no,r.source);
     const ex=r.no?S.cards.find(c=>!!c.star===r.star&&(c.no===r.no||baseNo(c.no)===baseNo(r.no)&&c.source===r.source)):null;
-    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.star)data.star=true; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.coord){const cs=[...new Set(r.coord.split("/").map(x=>x.trim()).filter(Boolean))];if(cs.length){data.coord=cs[0];if(cs.length>1)data.coords=cs}} if(r.memo)data.memo=r.memo;
-    let id; if(ex){Object.assign(ex,data);if(!r.star)delete ex.star; if(!r.type)delete ex.type; if(!r.brandName)delete ex.brand; if(!r.coord)delete ex.coord; if(!data.coords)delete ex.coords; if(!r.memo)delete ex.memo;id=ex.id;updated++} else {id=uid();S.cards.push({id,...data});added++}
+    const data={no:r.no,name:r.name,dan:r.dan,rarity:r.rarity,source:r.source,part:r.part}; if(r.rars&&r.rars.length>1)data.rars=r.rars; if(r.star)data.star=true; if(r.type)data.type=r.type; if(r.brandName){let b=S.brands.find(x=>norm(x.name)===norm(r.brandName));if(!b){b={id:"b"+uid().slice(1),name:r.brandName};S.brands.push(b);newBrand=true}data.brand=b.id} if(r.coord){const cs=[...new Set(r.coord.split("/").map(x=>x.trim()).filter(Boolean))];if(cs.length){data.coord=cs[0];if(cs.length>1)data.coords=cs}} if(r.memo)data.memo=r.memo;
+    let id; if(ex){Object.assign(ex,data);if(!r.star)delete ex.star; if(!r.type)delete ex.type; if(!r.brandName)delete ex.brand; if(!r.coord)delete ex.coord; if(!data.coords)delete ex.coords; if(!data.rars)delete ex.rars; if(!r.memo)delete ex.memo;id=ex.id;updated++} else {id=uid();S.cards.push({id,...data});added++}
     if(r.qty>0)S.qty[id]=Math.min(99,r.qty);
   });
   scheduleSave("cat"); scheduleSave("own"); if(newBrand)scheduleSave("brand"); render(); dMore.close();
@@ -1476,7 +1501,7 @@ $("#logoInput").addEventListener("change",async e=>{
 dBrand.addEventListener("close",()=>{if(dForm.open){const cur=document.querySelector('[data-pick="brand"] [aria-pressed="true"]');const $bp=$("#brandPick");if($bp)$bp.innerHTML=brandPickHTML(cur&&brandById(cur.dataset.v)?cur.dataset.v:"none")}});
 
 const PREFIX_CACHE="encore-binder-";
-const APP_VERSION="2026.11.19-7";
+const APP_VERSION="2026.11.19-9";
 async function hardReload(){
   toast("최신 버전을 받는 중이에요");
   try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>location.href.startsWith(r.scope)).map(r=>r.unregister()))}}catch(e){}
